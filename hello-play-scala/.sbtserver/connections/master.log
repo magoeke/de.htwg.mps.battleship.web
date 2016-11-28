@@ -1,0 +1,7 @@
+New log file opened at Mon Nov 28 13:57:05 CET 2016 by 7385@Ubuntu-UX303LAB
+Taking next connection to: 37368
+New client attempting to connect on port: 46598-37368
+  Address = /127.0.1.1:37368
+This client on port 46598 has uuid 2b4f70cc-cc1e-4115-8fd5-f8199152486b configName activator humanReadableName Activator protocolVersion 3 featureTags Vector()
+Connected Clients: activator-2b4f70cc-cc1e-4115-8fd5-f8199152486b
+Taking next connection to: 37368
