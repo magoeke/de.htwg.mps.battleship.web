@@ -1,0 +1,19 @@
+New log file opened at Sat Dec 03 12:40:53 CET 2016 by 6788@max-TowerCustom
+Taking next connection to: 57938
+New client attempting to connect on port: 47425-57938
+  Address = /127.0.1.1:57938
+This client on port 47425 has uuid 03ce41eb-b8f9-4f91-a72d-ddd72e6b396d configName play-fork-run humanReadableName Play Fork Run protocolVersion 1 featureTags Vector()
+Connected Clients: play-fork-run-03ce41eb-b8f9-4f91-a72d-ddd72e6b396d
+Taking next connection to: 57938
+Checking to see if clients are empty...
+We have 1 non-daemon clients, continuing serving connections.
+Taking next connection to: 57938
+Checking to see if clients are empty...
+We have 1 non-daemon clients, continuing serving connections.
+Taking next connection to: 57938
+Checking to see if clients are empty...
+We have 1 non-daemon clients, continuing serving connections.
+Taking next connection to: 57938
+Checking to see if clients are empty...
+We have 1 non-daemon clients, continuing serving connections.
+Taking next connection to: 57938
