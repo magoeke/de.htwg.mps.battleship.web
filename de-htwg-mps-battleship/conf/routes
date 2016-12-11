@@ -10,6 +10,6 @@ GET     /assets/*file               controllers.Assets.at(path="/public", file)
 GET     /webjars/*file              controllers.WebJarAssets.at(file)
 
 # Map google polymer elements
-GET /$file<paper.*|flex.*|iron.*>   controllers.PolymerElementHandler.redirectToElement(file: String)
+GET /$file<paper.*|neon.*|iron.*|font.*>   controllers.PolymerElementHandler.redirectToElement(file: String)
 GET /polymer/*file                  controllers.PolymerElementHandler.getPolymer(file: String)
 #GET	/assets/lib/$file<[paper|flex|iron]{1}*> controllers.PolymerElementHandler.redirectToElement(file: String)

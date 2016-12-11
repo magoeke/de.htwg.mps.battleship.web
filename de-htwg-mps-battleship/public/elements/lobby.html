@@ -1,43 +1,63 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
-<link rel="import" href="/paper-button/paper-button.html">-->
+<link rel="import" href="/paper-slider/paper-slider.html">
+<link rel="import" href="/paper-button/paper-button.html">
+<link rel="import" href="/paper-dialog/paper-dialog.html">
+<link rel="import" href="/paper-input/paper-input.html">
 
 <dom-module id="bs-lobby">
   <template>
     <div class="row">
       <div class="input-group">
-        <input type="text" class="form-control" placeholder="Search for...">
+        <input type="text" class="form-control" id="searchInput" value="{{searchString::input}}">
         <div class="input-group-btn">
-          <button class="btn btn-default" type="button">
+          <paper-button class="btn btn-default" type="button" on-tap="search">
             <span class="glyphicon glyphicon-search"></span>
-          </button>
-          <button class="btn btn-default" type="button">
+          </paper-button>
+          <paper-button class="btn btn-default" type="button" onclick="modal.open()">
             <span class="glyphicon glyphicon-plus"></span>
-          </button>
-          <paper-button>Hallo</paper-button>
+          </paper-button>
         </div>
       </div><!-- /input-group -->
     </div>
     <div class="row">
-      <table class="table">
+      <table class="table table-hover">
         <thead>
           <tr>
-            <th>Firstname</th>
-            <th>Lastname</th>
-            <th>Email</th>
+            <th>Name of game</th>
+            <th>player</th>
           </tr>
         </thead>
         <tbody>
-          <template is="dom-repeat" items="{{entries}}" strip-whitespace>
+          <template is="dom-repeat" items="{{entries}}" filter="{{computeFilter(searchString)}}" sort="sort" strip-whitespace>
             <tr>
-              <td>{{item.a}}</td>
-              <td>{{item.a}}</td>
-              <td>{{item.a}}</td>
+              <td>{{item.name}}</td>
+              <td>{{item.player}}</td>
             </tr>
           </template>
         </tbody>
       </table>
     </div>
+
+    <!-- Dialog to add a game -->
+    <paper-dialog id="modal" modal>
+      <h1>Create new game</h1>
+      <div id="row">
+        <paper-input id="nameInput" label="name of game"></paper-input>
+      </div>
+      <div id="row">
+        <div id="col-6">
+          Number of players:
+        </div>
+        <div id="col-6">
+          <paper-slider id="playerSlider" pin snaps min="2" max="6" max-markers="6" step="1" value="2"></paper-slider>
+        </div>
+      </div>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button dialog-confirm autofocus on-tap="addToList">Add</paper-button>
+      </div>
+    </paper-dialog>
   </template>
 </dom-module>
 
@@ -53,7 +73,50 @@ Polymer({
   },
 
   ready: function() {
-    console.log("ready");
+    console.log("fill entries with dummy data");
+    this.push('entries', {name: "game 1", player: "0"+"/"+"2"});
+    this.push('entries', {name: "game 2", player: "0"+"/"+"2"});
+    this.push('entries', {name: "game 10", player: "0"+"/"+"2"});
+    this.push('entries', {name: "game 3", player: "0"+"/"+"2"});
+    this.push('entries', {name: "game 4", player: "0"+"/"+"2"});
+    this.push('entries', {name: "game 5", player: "0"+"/"+"2"});
+    this.push('entries', {name: "game 6", player: "0"+"/"+"2"});
+    this.push('entries', {name: "game 7", player: "0"+"/"+"2"});
+    this.push('entries', {name: "game 8", player: "0"+"/"+"2"});
+    this.push('entries', {name: "game 9", player: "0"+"/"+"2"});
+  },
+
+  addToList: function() {
+    this.push('entries', {
+      name: document.querySelector("#nameInput").value,
+      player: "0"+"/"+document.querySelector("#playerSlider").value
+    });
+
+    // reset
+    document.querySelector("#nameInput").value = "";
+  },
+
+  computeFilter: function(searchStr) {
+    if(searchStr === "") return null;
+    searchStr = searchStr.toLowerCase();
+    return function(entry) {
+      var name = entry.name.toLowerCase();
+      for(var i = 0; i < searchStr.length; ++i) {
+        if(searchStr.charAt(i) !== name.charAt(i)) return false;
+      }
+      return true;
+    }
+  },
+
+  sort: function(a, b) {
+    var length = Math.min(a.name.length, b.name.length);
+    for(var i = 0; i < length; ++i) {
+      if(a.name.charAt(i) < b.name.charAt(i)) return -1;
+      else if(a.name.charAt(i) > b.name.charAt(i)) return 1;
+    }
+    if(a.name.length == b.name.length) return 0;
+    else if(a.name.length < b.name.length) return -1;
+    else return 1;
   }
 });
 </script>
