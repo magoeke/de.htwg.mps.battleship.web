@@ -36,7 +36,10 @@ class LobbyController @Inject() (implicit system: ActorSystem, materializer: Mat
     }
 
     override def receive = {
-      case msg: String => addGame(msg); out ! Json.toJson(games).toString()
+      case msg: String => msg match {
+        case "" => out ! Json.toJson(games).toString()
+        case _ => addGame(msg); out ! Json.toJson(games).toString()
+      }
     }
 
     private def addGame(str: String) = {
