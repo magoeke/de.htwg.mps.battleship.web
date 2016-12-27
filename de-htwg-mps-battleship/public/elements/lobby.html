@@ -95,7 +95,7 @@ Polymer({
     if (window.location.protocol === 'https:') {
       wsproto = 'wss://';
     }
-		var socketUrl = wsproto + location.host + '/socket';
+		var socketUrl = wsproto + location.host + '/socket/lobby';
 		this.wsSocket = new WebSocket(socketUrl);
 
 		console.log('Socket Status: ' + this.wsSocket.readyState + ' (ready)');

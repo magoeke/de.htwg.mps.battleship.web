@@ -14,4 +14,4 @@ GET     /$file<paper.*|neon.*|iron.*|font.*>   controllers.PolymerElementHandler
 GET     /polymer/*file                         controllers.PolymerElementHandler.getPolymer(file: String)
 
 # open websocket
-GET     /socket                                controllers.Application.socket
+GET     /socket/lobby                           controllers.LobbyController.socket
