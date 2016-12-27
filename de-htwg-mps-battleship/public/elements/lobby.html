@@ -86,6 +86,36 @@ Polymer({
     this.push('entries', {name: "game 9", player: "0"+"/"+"2"});
   },
 
+  attached: function() {
+    this._webSocket();
+  },
+
+  _webSocket: function() {
+    var wsproto = 'ws://';
+    if (window.location.protocol === 'https:') {
+      wsproto = 'wss://';
+    }
+		var socketUrl = wsproto + location.host + '/socket';
+		this.wsSocket = new WebSocket(socketUrl);
+
+		console.log('Socket Status: ' + this.wsSocket.readyState + ' (ready)');
+
+		this.wsSocket.onopen = function() {
+			console.log('Socket Status: ' + this.wsSocket.readyState + ' (open)');
+      this.wsSocket.send("Hallo!");
+		}.bind(this);
+
+		this.wsSocket.onmessage = function(msg) {
+      console.log(msg);
+		}.bind(this);
+
+		this.wsSocket.onclose = function() {
+			console.log('Socket Status: ' + this.wsSocket.readyState + ' (Closed)');
+			this.wsSocket.close();
+      this.wsSocket = undefined;
+		}.bind(this);
+  },
+
   addToList: function() {
     this.push('entries', {
       name: document.querySelector("#nameInput").value,
