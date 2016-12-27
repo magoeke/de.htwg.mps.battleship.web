@@ -31,8 +31,8 @@
         <tbody>
           <template is="dom-repeat" items="{{entries}}" filter="{{computeFilter(searchString)}}" sort="sort" strip-whitespace>
             <tr>
-              <td>{{item.name}}</td>
-              <td>{{item.player}}</td>
+              <td on-tap="onclick">{{item.name}}</td>
+              <td>{{item.player}} / {{item.maxPlayers}}</td>
             </tr>
           </template>
         </tbody>
@@ -72,18 +72,8 @@ Polymer({
     }
   },
 
-  ready: function() {
-    console.log("fill entries with dummy data");
-    this.push('entries', {name: "game 1", player: "0"+"/"+"2"});
-    this.push('entries', {name: "game 2", player: "0"+"/"+"2"});
-    this.push('entries', {name: "game 10", player: "0"+"/"+"2"});
-    this.push('entries', {name: "game 3", player: "0"+"/"+"2"});
-    this.push('entries', {name: "game 4", player: "0"+"/"+"2"});
-    this.push('entries', {name: "game 5", player: "0"+"/"+"2"});
-    this.push('entries', {name: "game 6", player: "0"+"/"+"2"});
-    this.push('entries', {name: "game 7", player: "0"+"/"+"2"});
-    this.push('entries', {name: "game 8", player: "0"+"/"+"2"});
-    this.push('entries', {name: "game 9", player: "0"+"/"+"2"});
+  onclick: function(e) {
+    console.log(e.model.item.UUID);
   },
 
   attached: function() {
@@ -102,11 +92,12 @@ Polymer({
 
 		this.wsSocket.onopen = function() {
 			console.log('Socket Status: ' + this.wsSocket.readyState + ' (open)');
-      this.wsSocket.send("Hallo!");
+      // this.wsSocket.send("Hallo!");
 		}.bind(this);
 
 		this.wsSocket.onmessage = function(msg) {
       console.log(msg);
+      this.entries = JSON.parse(msg.data);
 		}.bind(this);
 
 		this.wsSocket.onclose = function() {
@@ -117,10 +108,12 @@ Polymer({
   },
 
   addToList: function() {
-    this.push('entries', {
-      name: document.querySelector("#nameInput").value,
-      player: "0"+"/"+document.querySelector("#playerSlider").value
-    });
+    var request = {
+      name:  document.querySelector("#nameInput").value,
+      player: document.querySelector("#playerSlider").value
+    }
+
+    this.wsSocket.send(JSON.stringify(request));
 
     // reset
     document.querySelector("#nameInput").value = "";
