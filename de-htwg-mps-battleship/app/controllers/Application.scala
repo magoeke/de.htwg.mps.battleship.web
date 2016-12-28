@@ -35,7 +35,11 @@ class Application @Inject() (webJarAssets: WebJarAssets) extends Controller {
   }
 
   def setLobby(id: String) = Action { request =>
-    Ok("").withSession(request.session +  ("lobby-id" -> id))
+    Ok("").withSession(request.session + ("lobby-id" -> id))
+  }
+
+  def unsetLobby = Action { request =>
+    Ok("").withSession(request.session - "lobby-id")
   }
 
 }

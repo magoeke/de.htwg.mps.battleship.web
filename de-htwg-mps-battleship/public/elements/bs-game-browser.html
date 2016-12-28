@@ -74,7 +74,7 @@ Polymer({
   },
 
   onclick: function(e) {
-    $.post("/lobby/"+e.model.item.UUID, function(data) { location.reload(); });
+    $.post("/lobby/join/"+e.model.item.UUID, function(data) { location.reload(); });
   },
 
   attached: function() {

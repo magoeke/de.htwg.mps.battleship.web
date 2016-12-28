@@ -1,0 +1,89 @@
+<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<link rel="import" href="/paper-slider/paper-slider.html">
+
+<dom-module id="bs-lobby">
+  <template>
+    <div class="row">
+      <paper-button class="btn btn-default" type="button" on-tap="back">
+        <span class="glyphicon glyphicon-arrow-left"></span>
+      </paper-button>
+      Name of the current game
+    </div>
+    <div class="row" style="position:fixed; bottom:20px;">
+      <div class="col-lg-9">
+        <div id="messages" style="height:500px;"></div>
+        <div class="input-group">
+          <input type="text" class="form-control" id="messageInput" value="{{searchString::input}}">
+          <div class="input-group-btn">
+            <paper-button class="btn btn-default" type="button" on-tap="send">
+              <span class="glyphicon glyphicon-send"></span>
+            </paper-button>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3" style="max-height: 100px;">
+        <template is="dom-repeat" items="{{players}}" strip-whitespace>
+          {{item}} <br/>
+        </template>
+      </div>
+    </div>
+  </template>
+</dom-module>
+
+<script>
+Polymer({
+  is: "bs-lobby",
+
+  properties: {
+    players: {
+      type: Array,
+      value: function() { return []; }
+    }
+  },
+
+  ready: function() {
+    this.players = ["one", "two", "three"];
+  },
+
+  attached: function() {
+    var wsproto = 'ws://';
+    if (window.location.protocol === 'https:') {
+      wsproto = 'wss://';
+    }
+		var socketUrl = wsproto + location.host + '/socket/lobby';
+		this.wsSocket = new WebSocket(socketUrl);
+
+		console.log('Socket Status: ' + this.wsSocket.readyState + ' (ready)');
+
+		this.wsSocket.onopen = function() {
+			console.log('Socket Status: ' + this.wsSocket.readyState + ' (open)');
+		}.bind(this);
+
+		this.wsSocket.onmessage = function(msg) {
+      // this.entries = JSON.parse(msg.data);
+      console.log(msg)
+		}.bind(this);
+
+		this.wsSocket.onclose = function() {
+			console.log('Socket Status: ' + this.wsSocket.readyState + ' (Closed)');
+			this.wsSocket.close();
+      this.wsSocket = undefined;
+		}.bind(this);
+  },
+
+  send: function() {
+    var message = {
+      type: "message",
+      message: document.querySelector("#messageInput").value
+    }
+    this.wsSocket.send(JSON.stringify(obj));
+    document.querySelector("#messageInput").value = "";
+  },
+
+  back: function() {
+    $.post("/lobby/leave", function(data) { location.reload(); });
+  }
+});
+</script>

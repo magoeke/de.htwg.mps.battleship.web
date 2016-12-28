@@ -3,11 +3,12 @@
 # ~~~~
 
 GET     /                                      controllers.Application.index
-POST    /lobby/:id                             controllers.Application.setLobby(id: String)
+POST    /lobby/join/:id                        controllers.Application.setLobby(id: String)
+POST    /lobby/leave                           controllers.Application.unsetLobby
 
 # open websocket
 GET     /socket/gamebrowser                    controllers.GameBrowserController.socket
-GET     /socket/lobby                          controllers.GameBrowserController.socket
+GET     /socket/lobby                          controllers.LobbyController.socket
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file                          controllers.Assets.at(path="/public", file)
