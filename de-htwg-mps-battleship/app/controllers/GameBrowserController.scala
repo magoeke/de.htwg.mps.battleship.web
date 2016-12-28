@@ -17,17 +17,24 @@ import akka.stream.Materializer
 
 import models._
 
-class GameBrowserController @Inject() (implicit system: ActorSystem, materializer: Materializer) extends Controller {
+class GameBrowserController @Inject() (implicit system: ActorSystem, materializer: Materializer, gameList: IGameList) extends Controller {
+
+//  val webStateActor = system.actorOf(WebState.props)
 
   def socket = WebSocket.accept[String, String] { request =>
     ActorFlow.actorRef(out => GameBrowserSocketActor.props(out))
   }
 
   object GameBrowserSocketActor {
+    private val connections = ListBuffer[ActorRef]()
+
     def props(out: ActorRef) = Props(new GameBrowserSocketActor(out))
   }
 
   class GameBrowserSocketActor(out: ActorRef) extends Actor {
+    //register actor
+    gameList.actorRef ! RegisterActor
+
 
     implicit val MapWrites = new Writes[Map[UUID, GameEntry]] {
       def writes(m: Map[UUID, GameEntry]) = {
@@ -45,18 +52,21 @@ class GameBrowserController @Inject() (implicit system: ActorSystem, materialize
     }
 
     override def receive = {
-      case msg: String => msg match {
-        case "" => out ! Json.toJson(WebState.games).toString()
-        case _ => addGame(msg); out ! Json.toJson(WebState.games).toString()
-      }
+//      case msg: String => msg match {
+//        case "" => out ! ""
+//        case _ => addGame(msg)
+//      }
+      case msg: String => addGame(msg)
+      case UpdateGameBrowser(games) => out ! Json.toJson(games).toString()
     }
+
+    override def postStop() = gameList.actorRef ! DeregisterActor
 
     private def addGame(str: String) = {
       val json: JsValue = Json.parse(str)
       val name = (json \ "name").asOpt[String].getOrElse("default")
       val maxPlayers = (json \ "player").asOpt[Int].getOrElse(2)
-      WebState.addGame(name, maxPlayers)
-//      games += GameBrowserEntry(UUID.randomUUID(), name, 0, maxPlayers)
+      gameList.actorRef ! AddGame(name, maxPlayers)
     }
   }
 }

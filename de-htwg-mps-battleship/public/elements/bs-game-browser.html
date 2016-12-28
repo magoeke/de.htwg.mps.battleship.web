@@ -93,8 +93,6 @@ Polymer({
 
 		this.wsSocket.onopen = function() {
 			console.log('Socket Status: ' + this.wsSocket.readyState + ' (open)');
-      // empty message to get all games
-      this.wsSocket.send("");
 		}.bind(this);
 
 		this.wsSocket.onmessage = function(msg) {

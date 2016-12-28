@@ -9,7 +9,7 @@ import play.api.mvc.Result._
 
 import models._
 
-class Application @Inject() (webJarAssets: WebJarAssets) extends Controller {
+class Application @Inject() (webJarAssets: WebJarAssets, gameList: IGameList) extends Controller {
 
   def index = Action { request =>
     returnGame(request.session)
@@ -37,12 +37,14 @@ class Application @Inject() (webJarAssets: WebJarAssets) extends Controller {
   }
 
   def setLobby(id: String) = Action { request =>
-    WebState.joinLobby(UUID.fromString(id), UUID.fromString(request.session.get("user").get))
+    gameList.actorRef ! JoinLobby(UUID.fromString(id), UUID.fromString(request.session.get("user").get))
+//    WebState.joinLobby(UUID.fromString(id), UUID.fromString(request.session.get("user").get))
     Ok("").withSession(request.session + ("lobby-id" -> id))
   }
 
   def unsetLobby = Action { request =>
-    WebState.leaveLobby(UUID.fromString(request.session.get("lobby-id").get), UUID.fromString(request.session.get("user").get))
+    gameList.actorRef ! LeaveLobby(UUID.fromString(request.session.get("lobby-id").get), UUID.fromString(request.session.get("user").get))
+//    WebState.leaveLobby(UUID.fromString(request.session.get("lobby-id").get), UUID.fromString(request.session.get("user").get))
     Ok("").withSession(request.session - "lobby-id")
   }
 
