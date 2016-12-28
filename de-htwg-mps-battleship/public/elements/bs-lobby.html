@@ -62,8 +62,15 @@ Polymer({
 		}.bind(this);
 
 		this.wsSocket.onmessage = function(msg) {
-      // this.entries = JSON.parse(msg.data);
       console.log(msg)
+      var json = JSON.parse(msg.data);
+      switch(json.type) {
+        case "message":
+          $("#messages").append(json.sender + ": " + json.message + "</br>");
+          break;
+        default:
+          console.log(json)
+      }
 		}.bind(this);
 
 		this.wsSocket.onclose = function() {
@@ -74,11 +81,12 @@ Polymer({
   },
 
   send: function() {
+    console.log("send")
     var message = {
       type: "message",
       message: document.querySelector("#messageInput").value
     }
-    this.wsSocket.send(JSON.stringify(obj));
+    this.wsSocket.send(JSON.stringify(message));
     document.querySelector("#messageInput").value = "";
   },
 

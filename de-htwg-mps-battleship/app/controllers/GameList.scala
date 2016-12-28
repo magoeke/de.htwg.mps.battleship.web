@@ -43,12 +43,7 @@ class GameListActor extends Actor {
   private def games : Map[UUID, GameEntry] = gamesMap
 }
 
-case object RegisterActor
-case object DeregisterActor
-case class UpdateGameBrowser(games: Map[UUID, GameEntry])
-case class JoinLobby(lobbyID: UUID, playerID:UUID)
-case class LeaveLobby(lobbyID: UUID, playerID:UUID)
-case class AddGame(name: String, maxPlayers: Int)
+
 
 case class GameEntry(name: String, players: List[UUID], maxPlayers: Int) {
   def taken = players.length

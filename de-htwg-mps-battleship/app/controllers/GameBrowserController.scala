@@ -52,10 +52,6 @@ class GameBrowserController @Inject() (implicit system: ActorSystem, materialize
     }
 
     override def receive = {
-//      case msg: String => msg match {
-//        case "" => out ! ""
-//        case _ => addGame(msg)
-//      }
       case msg: String => addGame(msg)
       case UpdateGameBrowser(games) => out ! Json.toJson(games).toString()
     }

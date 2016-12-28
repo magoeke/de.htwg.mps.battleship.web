@@ -13,20 +13,27 @@ import play.api.libs.json._
 import akka.actor._
 import akka.stream.Materializer
 
-class LobbyController @Inject() (implicit system: ActorSystem, materializer: Materializer) extends Controller {
+class LobbyController @Inject() (implicit system: ActorSystem, materializer: Materializer, lobbyActor: ILobbyActor) extends Controller {
 
   def socket = WebSocket.accept[String, String] { request =>
-    ActorFlow.actorRef(out => LobbySocketActor.props(out))
+    ActorFlow.actorRef(out => LobbySocketActor.props(out, request.session))
   }
 
   object LobbySocketActor {
-    def props(out: ActorRef) = Props(new LobbySocketActor(out))
+    def props(out: ActorRef, session: Session) = Props(new LobbySocketActor(out, session))
   }
 
-  class LobbySocketActor(out: ActorRef) extends Actor {
+  class LobbySocketActor(out: ActorRef, session: Session) extends Actor {
+    val lobby = UUID.fromString(session.get("lobby-id").get)
+    val user = UUID.fromString(session.get("user").get)
+
+    lobbyActor.actorRef ! RegisterLobbyActor(lobby)
 
     override def receive = {
-      case msg: String => out ! Json.toJson(msg).toString()
+      case msg: String => lobbyActor.actorRef ! BroadcastMessage(lobby, user, msg)
+      case SendMessage(msg) => out ! msg
     }
+
+    override def postStop() = lobbyActor.actorRef ! DeregisterLobbyActor(lobby)
   }
 }
