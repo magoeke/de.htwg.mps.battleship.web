@@ -38,13 +38,11 @@ class Application @Inject() (webJarAssets: WebJarAssets, gameList: IGameList) ex
 
   def setLobby(id: String) = Action { request =>
     gameList.actorRef ! JoinLobby(UUID.fromString(id), UUID.fromString(request.session.get("user").get))
-//    WebState.joinLobby(UUID.fromString(id), UUID.fromString(request.session.get("user").get))
     Ok("").withSession(request.session + ("lobby-id" -> id))
   }
 
   def unsetLobby = Action { request =>
     gameList.actorRef ! LeaveLobby(UUID.fromString(request.session.get("lobby-id").get), UUID.fromString(request.session.get("user").get))
-//    WebState.leaveLobby(UUID.fromString(request.session.get("lobby-id").get), UUID.fromString(request.session.get("user").get))
     Ok("").withSession(request.session - "lobby-id")
   }
 

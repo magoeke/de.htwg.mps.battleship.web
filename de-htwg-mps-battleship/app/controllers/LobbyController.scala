@@ -15,7 +15,7 @@ import akka.stream.Materializer
 
 class LobbyController @Inject() (implicit system: ActorSystem, materializer: Materializer) extends Controller {
 
-    def socket = WebSocket.accept[String, String] { request =>
+  def socket = WebSocket.accept[String, String] { request =>
     ActorFlow.actorRef(out => LobbySocketActor.props(out))
   }
 

@@ -18,12 +18,11 @@ trait IGameList {
 
 @Singleton
 class GameList @Inject() (implicit system: ActorSystem) extends IGameList{
-  val webStateActor = system.actorOf(Props[WebStateActor])
-  override def actorRef = webStateActor
+  val gameListActor = system.actorOf(Props[GameListActor])
+  override def actorRef = gameListActor
 }
 
-
-class WebStateActor extends Actor {
+class GameListActor extends Actor {
 
   private val gamesMap = Map[UUID, GameEntry]()
   private val connections = ListBuffer[ActorRef]()
@@ -39,7 +38,7 @@ class WebStateActor extends Actor {
   private def broadcast() = connections.foreach(unicast(_))
   private def unicast(actor: ActorRef) = actor ! UpdateGameBrowser(gamesMap)
   private def addGame(name: String, maxPlayers: Int) = gamesMap += (UUID.randomUUID() -> GameEntry(name, List[UUID](), maxPlayers))
-  private def joinLobby(lobbyID: UUID, playerID: UUID) = gamesMap(lobbyID) = gamesMap(lobbyID).copy(players = playerID :: gamesMap(lobbyID).players)
+  private def joinLobby(lobbyID: UUID, playerID: UUID) = gamesMap(lobbyID) = gamesMap(lobbyID).copy(players = gamesMap(lobbyID).players union List(playerID))
   private def leaveLobby(lobbyID: UUID, playerID: UUID) = gamesMap(lobbyID) = gamesMap(lobbyID).copy(players = gamesMap(lobbyID).players diff List(playerID))
   private def games : Map[UUID, GameEntry] = gamesMap
 }
