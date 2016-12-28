@@ -29,25 +29,18 @@ class WebStateActor extends Actor {
   private val connections = ListBuffer[ActorRef]()
 
   override def receive = {
-    case RegisterActor => connections += sender()
+    case RegisterActor => connections += sender(); unicast(sender())
     case DeregisterActor => connections -= sender()
-    case JoinLobby(lobbyID, playerID) => joinLobby(lobbyID, playerID)
-    case LeaveLobby(lobbyID, playerID) => leaveLobby(lobbyID, playerID)
-    case AddGame(name, maxPlayers) => addGame(name, maxPlayers); connections.foreach(_ ! UpdateGameBrowser(gamesMap))
+    case JoinLobby(lobbyID, playerID) => joinLobby(lobbyID, playerID); broadcast()
+    case LeaveLobby(lobbyID, playerID) => leaveLobby(lobbyID, playerID); broadcast()
+    case AddGame(name, maxPlayers) => addGame(name, maxPlayers); broadcast()
   }
 
-  private def addGame(name: String, maxPlayers: Int) = {
-    gamesMap += (UUID.randomUUID() -> GameEntry(name, List[UUID](), maxPlayers))
-  }
-
-  private def joinLobby(lobbyID: UUID, playerID: UUID) = {
-    gamesMap(lobbyID) = gamesMap(lobbyID).copy(players = playerID :: gamesMap(lobbyID).players)
-  }
-
-  private def leaveLobby(lobbyID: UUID, playerID: UUID) = {
-    gamesMap(lobbyID) = gamesMap(lobbyID).copy(players = gamesMap(lobbyID).players diff List(playerID))
-  }
-
+  private def broadcast() = connections.foreach(unicast(_))
+  private def unicast(actor: ActorRef) = actor ! UpdateGameBrowser(gamesMap)
+  private def addGame(name: String, maxPlayers: Int) = gamesMap += (UUID.randomUUID() -> GameEntry(name, List[UUID](), maxPlayers))
+  private def joinLobby(lobbyID: UUID, playerID: UUID) = gamesMap(lobbyID) = gamesMap(lobbyID).copy(players = playerID :: gamesMap(lobbyID).players)
+  private def leaveLobby(lobbyID: UUID, playerID: UUID) = gamesMap(lobbyID) = gamesMap(lobbyID).copy(players = gamesMap(lobbyID).players diff List(playerID))
   private def games : Map[UUID, GameEntry] = gamesMap
 }
 
