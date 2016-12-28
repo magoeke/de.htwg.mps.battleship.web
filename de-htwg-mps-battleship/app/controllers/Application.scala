@@ -17,17 +17,17 @@ class Application @Inject() (webJarAssets: WebJarAssets) extends Controller {
     val page = Ok("not created yet")
     SessionHandler.handle(session, "game-id",
       (s: Session) => page.withSession(s),
-      (s: Session) => returnSpecificLobby(s))
-  }
-
-  private def returnSpecificLobby(session: Session) = {
-    val page = Ok("not created yet")
-    SessionHandler.handle(session, "lobby-id",
-      (s: Session) => page.withSession(s),
       (s: Session) => returnLobby(s))
   }
 
-  private def returnLobby(session: Session) : Result = {
+  private def returnLobby(session: Session) = {
+    val page = Ok(views.html.Application.lobby(webJarAssets))
+    SessionHandler.handle(session, "lobby-id",
+      (s: Session) => page.withSession(s),
+      (s: Session) => returnGameBrowser(s))
+  }
+
+  private def returnGameBrowser(session: Session) : Result = {
     val page = Ok(views.html.Application.index(webJarAssets))
     SessionHandler.handle(session, "user",
       (s: Session) => page.withSession(s),

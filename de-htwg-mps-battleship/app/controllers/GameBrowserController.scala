@@ -13,21 +13,21 @@ import play.api.libs.json._
 import akka.actor._
 import akka.stream.Materializer
 
-class LobbyController @Inject() (implicit system: ActorSystem, materializer: Materializer) extends Controller {
+class GameBrowserController @Inject() (implicit system: ActorSystem, materializer: Materializer) extends Controller {
 
-  val games = new ListBuffer[LobbyEntry]()
+  val games = new ListBuffer[GameBrowserEntry]()
 
   def socket = WebSocket.accept[String, String] { request =>
-    ActorFlow.actorRef(out => LobbySocketActor.props(out))
+    ActorFlow.actorRef(out => GameBrowserSocketActor.props(out))
   }
 
-  object LobbySocketActor {
-    def props(out: ActorRef) = Props(new LobbySocketActor(out))
+  object GameBrowserSocketActor {
+    def props(out: ActorRef) = Props(new GameBrowserSocketActor(out))
   }
 
-  class LobbySocketActor(out: ActorRef) extends Actor {
-    implicit val EntryWrites = new Writes[LobbyEntry] {
-      def writes(entry: LobbyEntry) = Json.obj(
+  class GameBrowserSocketActor(out: ActorRef) extends Actor {
+    implicit val EntryWrites = new Writes[GameBrowserEntry] {
+      def writes(entry: GameBrowserEntry) = Json.obj(
         "UUID" -> entry.id,
         "name" -> entry.name,
         "player" -> entry.player,
@@ -46,9 +46,9 @@ class LobbyController @Inject() (implicit system: ActorSystem, materializer: Mat
       val json: JsValue = Json.parse(str)
       val name = (json \ "name").asOpt[String].getOrElse("default")
       val maxPlayers = (json \ "player").asOpt[Int].getOrElse(2)
-      games += LobbyEntry(UUID.randomUUID(), name, 0, maxPlayers)
+      games += GameBrowserEntry(UUID.randomUUID(), name, 0, maxPlayers)
     }
   }
 }
 
-case class LobbyEntry(id: UUID, name: String, player: Int, maxPlayers: Int) {}
+case class GameBrowserEntry(id: UUID, name: String, player: Int, maxPlayers: Int) {}
