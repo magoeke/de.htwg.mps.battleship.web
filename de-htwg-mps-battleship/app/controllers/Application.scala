@@ -7,6 +7,8 @@ import play.api._
 import play.api.mvc._
 import play.api.mvc.Result._
 
+import models._
+
 class Application @Inject() (webJarAssets: WebJarAssets) extends Controller {
 
   def index = Action { request =>
@@ -35,10 +37,12 @@ class Application @Inject() (webJarAssets: WebJarAssets) extends Controller {
   }
 
   def setLobby(id: String) = Action { request =>
+    WebState.joinLobby(UUID.fromString(id), UUID.fromString(request.session.get("user").get))
     Ok("").withSession(request.session + ("lobby-id" -> id))
   }
 
   def unsetLobby = Action { request =>
+    WebState.leaveLobby(UUID.fromString(request.session.get("lobby-id").get), UUID.fromString(request.session.get("user").get))
     Ok("").withSession(request.session - "lobby-id")
   }
 
