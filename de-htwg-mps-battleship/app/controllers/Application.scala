@@ -46,6 +46,10 @@ class Application @Inject() (webJarAssets: WebJarAssets, gameList: IGameList) ex
     Ok("").withSession(request.session - "lobby-id")
   }
 
+  def setGame(id: String) = Action { request =>
+    Ok("").withSession(request.session - "lobby-id" + ("game-id" -> id))
+  }
+
 }
 
 object SessionHandler {

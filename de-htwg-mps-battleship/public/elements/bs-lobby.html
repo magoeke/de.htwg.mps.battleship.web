@@ -1,7 +1,18 @@
 <!-- <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script> -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<link rel="import" href="/paper-button/paper-button.html">
 
-<link rel="import" href="/paper-slider/paper-slider.html">
+<style>
+#messages {
+  height:500px;
+  overflow-x: hidden;
+  overflow-y:auto;
+}
+
+.col-lg-9 {
+  border: 1px black solid;
+}
+</style>
 
 <dom-module id="bs-lobby">
   <template>
@@ -11,9 +22,9 @@
       </paper-button>
       Name of the current game
     </div>
-    <div class="row" style="position:fixed; bottom:20px;">
+    <div class="row" id="content-row">
       <div class="col-lg-9">
-        <div id="messages" style="height:500px;"></div>
+        <div id="messages"></div>
         <div class="input-group">
           <input type="text" class="form-control" id="messageInput" value="{{searchString::input}}">
           <div class="input-group-btn">
@@ -23,12 +34,24 @@
           </div>
         </div>
       </div>
-      <div class="col-lg-3" style="max-height: 100px;">
+      <div class="col-lg-3">
         <template is="dom-repeat" items="{{players}}" strip-whitespace>
           {{item}} <br/>
         </template>
+
+        <paper-button toggles raised class="green">Ready</paper-button>
       </div>
     </div>
+
+    <style is="custom-style">
+      .green {
+        background-color: red;
+        color: white;
+      }
+      .green[active] {
+        background-color: green;
+      }
+    </style>
   </template>
 </dom-module>
 
@@ -58,7 +81,6 @@ Polymer({
 		}.bind(this);
 
 		this.wsSocket.onmessage = function(msg) {
-      console.log(msg)
       var json = JSON.parse(msg.data);
       switch(json.type) {
         case "message":
@@ -66,6 +88,9 @@ Polymer({
           break;
         case "players":
           this.players = json.players;
+          break;
+        case "gamestart":
+          $.post("/game/join/"+json.gameid, function(data) { location.reload(); });
           break;
         default:
           console.log(json)

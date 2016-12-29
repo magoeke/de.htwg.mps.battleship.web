@@ -6,6 +6,8 @@ GET     /                                      controllers.Application.index
 POST    /lobby/join/:id                        controllers.Application.setLobby(id: String)
 POST    /lobby/leave                           controllers.Application.unsetLobby
 
+POST    /game/join/:id                         controllers.Application.setGame(id: String)
+
 # open websocket
 GET     /socket/gamebrowser                    controllers.GameBrowserController.socket
 GET     /socket/lobby                          controllers.LobbyController.socket

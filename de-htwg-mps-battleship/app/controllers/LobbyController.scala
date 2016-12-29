@@ -33,6 +33,7 @@ class LobbyController @Inject() (implicit system: ActorSystem, materializer: Mat
       case msg: String => lobbyActor.actorRef ! BroadcastMessage(lobby, user, msg)
       case SendMessage(msg) => out ! msg
       case UpdatePlayers(msg) => out ! msg
+      case StartGame(msg) => out ! msg
     }
 
     override def postStop() = lobbyActor.actorRef ! DeregisterLobbyActor(lobby)

@@ -8,6 +8,10 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Map
 import akka.actor._
 import play.api.libs.json._
+import akka.util.Timeout
+import scala.concurrent.{Await, Future}
+import akka.pattern.ask
+import scala.concurrent.duration._
 
 import com.google.inject.ImplementedBy
 
@@ -38,10 +42,25 @@ class LobbyActorImpl(val gameListActor: ActorRef) extends Actor {
 
   private def register(lobbyID: UUID, actor: ActorRef) = {
     if(connections.exists(_._1 == lobbyID)) {
+      implicit val timeout = Timeout(1 seconds)
+      val future = gameListActor ? MaxPlayers(lobbyID)
       connections(lobbyID) = connections(lobbyID) union List(actor)
+      val current = connections(lobbyID).length
+      val result = Await.result(future, timeout.duration).asInstanceOf[Int]
+      if(current == result) { start(lobbyID)}
     } else {
       connections += (lobbyID -> List(actor))
     }
+  }
+
+  private def start(lobby: UUID): Unit = {
+    val gameID = UUID.randomUUID()
+    val json: JsValue = JsObject(Seq(
+      "type" -> JsString("gamestart"),
+      "gameid" -> JsString(gameID.toString)
+    ))
+
+    broadcast(lobby, StartGame(Json.stringify(json)))
   }
 
   private def deregister(lobbyID: UUID, actor: ActorRef) = {
