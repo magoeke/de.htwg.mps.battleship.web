@@ -17,19 +17,20 @@ trait ILobbyActor {
 }
 
 @Singleton
-class LobbyActor @Inject() (implicit system: ActorSystem) extends ILobbyActor{
-  val lobbyActor = system.actorOf(Props[LobbyActorImpl])
+class LobbyActor @Inject() (implicit system: ActorSystem, gameList: IGameList) extends ILobbyActor{
+  val lobbyActor = system.actorOf(Props(new LobbyActorImpl(gameList.actorRef)))
   override def actorRef = lobbyActor
 }
 
-class LobbyActorImpl extends Actor {
+class LobbyActorImpl(val gameListActor: ActorRef) extends Actor {
 
   private val connections = Map[UUID, List[ActorRef]]()
 
   override def receive = {
-    case RegisterLobbyActor(lobby) => register(lobby, sender());
-    case DeregisterLobbyActor(lobby) => deregister(lobby, sender())
+    case RegisterLobbyActor(lobby) => register(lobby, sender()); gameListActor ! PlayerInLobby(lobby)
+    case DeregisterLobbyActor(lobby) => deregister(lobby, sender()); gameListActor ! PlayerInLobby(lobby)
     case BroadcastMessage(lobby, sender, message) => sendMessage(lobby, sender, message)
+    case BroadcastPlayerInLobby(lobby, players) => sendPlayers(lobby, players)
   }
 
   private def broadcast(lobby: UUID, msg: Message) = connections(lobby).foreach(unicast(_, msg))
@@ -57,6 +58,15 @@ class LobbyActorImpl extends Actor {
     val message: JsObject = JsObject(Seq("sender" -> JsString(sender.toString())))
 
     broadcast(lobby, SendMessage(Json.stringify(json ++ message)))
+  }
+
+  private def sendPlayers(lobby: UUID, players: List[UUID]) = {
+    val json: JsValue = JsObject(Seq(
+      "type" -> JsString("players"),
+      "players" -> Json.toJson(players)
+    ))
+
+    broadcast(lobby, UpdatePlayers(Json.stringify(json)))
   }
 }
 

@@ -43,10 +43,6 @@ Polymer({
     }
   },
 
-  ready: function() {
-    this.players = ["one", "two", "three"];
-  },
-
   attached: function() {
     var wsproto = 'ws://';
     if (window.location.protocol === 'https:') {
@@ -67,6 +63,9 @@ Polymer({
       switch(json.type) {
         case "message":
           $("#messages").append(json.sender + ": " + json.message + "</br>");
+          break;
+        case "players":
+          this.players = json.players;
           break;
         default:
           console.log(json)

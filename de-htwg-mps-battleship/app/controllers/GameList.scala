@@ -33,6 +33,7 @@ class GameListActor extends Actor {
     case JoinLobby(lobbyID, playerID) => joinLobby(lobbyID, playerID); broadcast()
     case LeaveLobby(lobbyID, playerID) => leaveLobby(lobbyID, playerID); broadcast()
     case AddGame(name, maxPlayers) => addGame(name, maxPlayers); broadcast()
+    case PlayerInLobby(lobby) => sender() ! BroadcastPlayerInLobby(lobby, gamesMap(lobby).players)
   }
 
   private def broadcast() = connections.foreach(unicast(_))

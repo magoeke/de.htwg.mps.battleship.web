@@ -10,6 +10,9 @@ case class RegisterLobbyActor(lobbyID: UUID)
 case class DeregisterLobbyActor(lobbyID: UUID)
 case class BroadcastMessage(lobby: UUID, sender: UUID, message: String)
 case class SendMessage(msg: String) extends Message
+case class PlayerInLobby(lobby: UUID)
+case class BroadcastPlayerInLobby(lobby: UUID, players: List[UUID])
+case class UpdatePlayers(msg: String) extends Message
 
 case object RegisterActor
 case object DeregisterActor
