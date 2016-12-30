@@ -14,23 +14,22 @@
   (vec (repeat board-size
     (vec (repeat board-size :empty)))))
 
-(defn game-cell
-  []
+(defn game-cell []
   [:div {:class "game-cell"
          :on-click #(println "clicked")}])
 
+(defn game-row [children] [:div {:class "game-row"} children])
 (defn calculate-cell-id [multiplier index] (+ index (* (+ multiplier 1) index)))
 (defn calculate-row-id [multiplier] (- (- 1 board-size) multiplier))
 
 (defn draw-board-cell
   [cells result multiplier]
   (if (= (first cells) nil)
-    [:div {:class "game-row" :key (str "row" (calculate-row-id multiplier))} result]
+    ^{:key (str "row" (calculate-row-id multiplier))} [game-row result]
     (draw-board-cell
       (rest cells)
       (conj result
-        [:div {:class "game-cell"
-               :key (str "cell" (calculate-cell-id multiplier (count cells)))}])
+        ^{:key (str "game-cell" (calculate-cell-id multiplier (count cells)))} [game-cell])
       multiplier)))
 
 (defn draw-board-row
