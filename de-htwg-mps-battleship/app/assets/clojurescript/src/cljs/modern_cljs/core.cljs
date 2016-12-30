@@ -19,23 +19,36 @@
   [:div {:class "game-cell"
          :on-click #(println "clicked")}])
 
-(defn board
-  [state]
-  (println state)
-  [:div
-    (for [row state]
-      [:div {:class "game-row"}
-        (for [cell row] (game-cell))])])
+(defn calculate-cell-id [multiplier index] (+ index (* (+ multiplier 1) index)))
+(defn calculate-row-id [multiplier] (- (- 1 board-size) multiplier))
 
-; ^{:key cell} (game-cell)
+(defn draw-board-cell
+  [cells result multiplier]
+  (if (= (first cells) nil)
+    [:div {:class "game-row" :key (str "row" (calculate-row-id multiplier))} result]
+    (draw-board-cell
+      (rest cells)
+      (conj result
+        [:div {:class "game-cell"
+               :key (str "cell" (calculate-cell-id multiplier (count cells)))}])
+      multiplier)))
+
+(defn draw-board-row
+  [rows result]
+  (if (= (first rows) nil)
+    [:div result]
+    (draw-board-row (rest rows) (conj result (draw-board-cell (first rows) (list) (count result))))
+))
 
 (defn split-screen
   []
   (let [rows (.ceil js/Math (/ number-of-players 2))]
-  [:div {:style {:height "100%"}}
-    (repeat rows [:div {:style {:height (str (/ 100 rows) "%")}}
-      [:div {:class "left-screen"} (board empty-board)]
-      [:div {:class "right-screen"} (board empty-board)]])]))
+    [:div {:style {:height "100%"}}
+      (for [index (range number-of-players)]
+        [:div {:key (str "screen" index)
+               :style {:height (str (/ 100 rows) "%")}
+               :class (if (= 0 (mod index 2)) "left-screen" "right-screen")}
+          [draw-board-row empty-board (list)]])]))
 
 (defn start []
   (r/render-component
