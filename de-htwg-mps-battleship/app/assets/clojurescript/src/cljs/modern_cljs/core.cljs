@@ -10,44 +10,40 @@
 
 (def number-of-players 2)
 (def board-size 10)
-(def empty-board
-  (vec (repeat board-size
-    (vec (repeat board-size :empty)))))
+(def empty-board (repeat (* board-size board-size) :empty))
+(defn board-with-index [board] (map (fn [a b] (vector a b)) board (range (count board))))
+
+; (println empty-board)
+
+; (println (board-with-index empty-board))
+
+; (doall (map println empty-board))
+
+(defn number-of-rows [] (.ceil js/Math (/ number-of-players 2)))
+
+(defn cell-size [] (/ (min 50 (/ 100 (number-of-rows))) board-size))
 
 (defn game-cell []
   [:div {:class "game-cell"
-         :on-click #(println "clicked")}])
+         :on-click #(println "clicked")
+         :style {:width "4vw"
+                 :height "4vw"}}])
 
-(defn game-row [children] [:div {:class "game-row"} children])
-(defn calculate-cell-id [multiplier index] (+ index (* (+ multiplier 1) index)))
-(defn calculate-row-id [multiplier] (- (- 1 board-size) multiplier))
-
-(defn draw-board-cell
-  [cells result multiplier]
-  (if (= (first cells) nil)
-    ^{:key (str "row" (calculate-row-id multiplier))} [game-row result]
-    (draw-board-cell
-      (rest cells)
-      (conj result
-        ^{:key (str "game-cell" (calculate-cell-id multiplier (count cells)))} [game-cell])
-      multiplier)))
-
-(defn draw-board-row
-  [rows result]
-  (if (= (first rows) nil)
-    [:div result]
-    (draw-board-row (rest rows) (conj result (draw-board-cell (first rows) (list) (count result))))
-))
+(defn output-game []
+  (let [cells (board-with-index empty-board)]
+    [:div {:class "board"}
+      (doall (map (fn [cell] ^{:key (str "cell" (get cell 1))}[game-cell]) cells))]))
 
 (defn split-screen
   []
-  (let [rows (.ceil js/Math (/ number-of-players 2))]
-    [:div {:style {:height "100%"}}
+  (let [rows (number-of-rows)]
+    [:div {:style {:height "100vh"}}
       (for [index (range number-of-players)]
         [:div {:key (str "screen" index)
-               :style {:height (str (/ 100 rows) "%")}
+               :style {:height (str (/ 100 rows) "vh")}
                :class (if (= 0 (mod index 2)) "left-screen" "right-screen")}
-          [draw-board-row empty-board (list)]])]))
+          [output-game]
+          ])]))
 
 (defn start []
   (r/render-component

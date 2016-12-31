@@ -4,40 +4,47 @@
     <title>Hello, World!</title>
     <style>
       html, body {
-        height: 100%;
+        height: 100vh;
         margin: 0;
       }
 
       #content {
-        height: 100%;
-        width: 100%;
+        height: 100vh;
+        width: 100vw;
       }
 
       .left-screen {
-        float:left;
-        width: 50%;
-        height:100%;
-        background-color:green;
+        height: 100vh;
+        width: 50vw;
+        background-color: blue;
+        float: left;
       }
 
       .right-screen {
-        width: 50%;
-        height:100%;
-        background-color:blue;
-        float: right;
+        height: 100vh;
+        background-color: green;
       }
 
       .game-row {
-        display: block;
   	    clear: both;
-  	    /*margin: 5px;*/
       }
 
       .game-cell {
-        width:20px;
-        height: 20px;
-        border: 1px black solid;
+        border:1px black solid;
         float:left;
+      }
+
+      .board {
+        width: 43vw;
+        display: -webkit-flex;
+        display: flex;
+        -webkit-flex-wrap: wrap;
+        flex-wrap: wrap;
+        margin: auto;
+        border: 1px solid black;
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
       }
     </style>
   </head>
