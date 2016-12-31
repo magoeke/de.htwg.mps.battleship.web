@@ -11,12 +11,44 @@
 (defn initial-game [] (map (fn [] empty-board) (range number-of-players)))
 
 (def game-state (r/atom (initial-game)))
+(def ship-setting (r/atom false))
+(def ship-setting-start (r/atom -1))
 
 (defn list-with-index [board] (map (fn [a b] (vector a b)) board (range (count board))))
 (defn number-of-rows [] (.ceil js/Math (/ number-of-players 2)))
 
-(defn mousemove [evt]
-    (println (.-target evt)))
+(defn change-cell [game-state player index value]
+  (map (fn [board]
+    (if (not= (get board 1) player)
+      (get board 0)
+      (map (fn [cell]
+        (if (not= (get cell 1) index)
+        (get cell 0)
+        value)) (list-with-index (get board 0))))) (list-with-index game-state)))
+
+(defn cell-range [current-id]
+  (let [start (int @ship-setting-start) current (int current-id)]
+    (range (min start current) (inc (max start current)))))
+
+(defn change-board [board board_idx indexes value]
+    (if (not (empty? indexes))
+      (change-board
+        (change-cell board board_idx (first indexes) value)
+        board_idx
+        (rest indexes)
+        value)
+      board))
+
+(defn cell-mouse-move [evt]
+  (if (not= @ship-setting-start -1)
+    (reset! game-state (change-board @game-state 0 (cell-range (-> evt .-target .-id)) :set))))
+
+(defn cell-mouse-down [evt]
+    (reset! ship-setting-start (-> evt .-target .-id)))
+
+(defn cell-mouse-up [evt]
+    ; send coordinates to server
+    (reset! ship-setting-start -1))
 
 (defn cell-class [state]
   (cond
@@ -24,13 +56,17 @@
     (= state :set) "set"
     (= state :hit) "hit"))
 
-(defn game-cell [state] [:div {:class (str "game-cell" " " (cell-class state))
-                              :on-mouseMove mousemove}])
+(defn game-cell [id state] [:div {:class (str "game-cell" " " (cell-class state))
+                                  :key (str "game-cell" id)
+                                  :id id
+                                  :on-mouse-move cell-mouse-move
+                                  :on-mouse-down cell-mouse-down
+                                  :on-mouse-up cell-mouse-up}])
 
 (defn output-game [board]
   (let [cells (list-with-index board)]
     [:div {:class "board"}
-      (doall (map (fn [cell] ^{:key (str "cell" (get cell 1))} [game-cell (get cell 0)]) cells))]))
+      (doall (map (fn [cell] (game-cell (get cell 1) (get cell 0))) cells))]))
 
 (defn split-screen
   []
@@ -44,19 +80,7 @@
 
 (defn start [] (r/render-component [split-screen] (.getElementById js/document "content")))
 
-(defn change-cell [player index value]
-  (map (fn [board]
-    (if (not= (get board 1) player)
-      (get board 0)
-      (map (fn [cell]
-        (if (not= (get cell 1) index)
-        (get cell 0)
-        value)) (list-with-index (get board 0))))) (list-with-index @game-state)))
-
-
-(println (change-cell 0 0 :hit))
-
-(reset! game-state (change-cell 0 0 :hit))
+(reset! game-state (change-cell @game-state 1 0 :hit))
 
 ;; shows
 (start)
