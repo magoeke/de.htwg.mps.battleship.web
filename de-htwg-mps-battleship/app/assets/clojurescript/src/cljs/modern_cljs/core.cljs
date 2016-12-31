@@ -5,29 +5,13 @@
 ;; enable cljs to print to the JS console of the browser
 (enable-console-print!)
 
-;; print to the console
-(println "Hello, World!")
-
 (def number-of-players 2)
 (def board-size 10)
 (def empty-board (repeat (* board-size board-size) :empty))
+
 (defn board-with-index [board] (map (fn [a b] (vector a b)) board (range (count board))))
-
-; (println empty-board)
-
-; (println (board-with-index empty-board))
-
-; (doall (map println empty-board))
-
 (defn number-of-rows [] (.ceil js/Math (/ number-of-players 2)))
-
-(defn cell-size [] (/ (min 50 (/ 100 (number-of-rows))) board-size))
-
-(defn game-cell []
-  [:div {:class "game-cell"
-         :on-click #(println "clicked")
-         :style {:width "4vw"
-                 :height "4vw"}}])
+(defn game-cell [] [:div {:class "game-cell" :on-click #(println "clicked")}])
 
 (defn output-game []
   (let [cells (board-with-index empty-board)]
@@ -49,7 +33,6 @@
   (r/render-component
    [split-screen]
    (.getElementById js/document "content")))
-
 
 ;; shows
 (start)

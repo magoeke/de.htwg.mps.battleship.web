@@ -3,14 +3,28 @@
   <head>
     <title>Hello, World!</title>
     <style>
-      html, body {
-        height: 100vh;
+      body {
+        padding: 0;
         margin: 0;
       }
 
-      #content {
-        height: 100vh;
-        width: 100vw;
+      .board {
+        width: 40vw;
+        display: -webkit-flex;
+        display: flex;
+        -webkit-flex-wrap: wrap;
+        flex-wrap: wrap;
+        margin: auto;
+        border: 1px solid black;
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .game-cell {
+        background-color: white;
+        min-height: 4vw;
+        width: 4vw;
       }
 
       .left-screen {
@@ -23,28 +37,6 @@
       .right-screen {
         height: 100vh;
         background-color: green;
-      }
-
-      .game-row {
-  	    clear: both;
-      }
-
-      .game-cell {
-        border:1px black solid;
-        float:left;
-      }
-
-      .board {
-        width: 43vw;
-        display: -webkit-flex;
-        display: flex;
-        -webkit-flex-wrap: wrap;
-        flex-wrap: wrap;
-        margin: auto;
-        border: 1px solid black;
-        position: relative;
-        top: 50%;
-        transform: translateY(-50%);
       }
     </style>
   </head>
