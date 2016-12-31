@@ -22,7 +22,7 @@
   (cond
     (= state :empty) "empty"
     (= state :set) "set"
-    (= state :ht) "hit"))
+    (= state :hit) "hit"))
 
 (defn game-cell [state] [:div {:class (str "game-cell" " " (cell-class state))
                               :on-mouseMove mousemove}])
@@ -43,6 +43,20 @@
           [output-game (get board 0)]])]))
 
 (defn start [] (r/render-component [split-screen] (.getElementById js/document "content")))
+
+(defn change-cell [player index value]
+  (map (fn [board]
+    (if (not= (get board 1) player)
+      (get board 0)
+      (map (fn [cell]
+        (if (not= (get cell 1) index)
+        (get cell 0)
+        value)) (list-with-index (get board 0))))) (list-with-index @game-state)))
+
+
+(println (change-cell 0 0 :hit))
+
+(reset! game-state (change-cell 0 0 :hit))
 
 ;; shows
 (start)
