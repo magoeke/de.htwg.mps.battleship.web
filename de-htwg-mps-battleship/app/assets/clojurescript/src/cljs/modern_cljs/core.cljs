@@ -26,9 +26,18 @@
         (get cell 0)
         value)) (list-with-index (get board 0))))) (list-with-index game-state)))
 
+(defn cell-range-steps [start current]
+  (if (= (mod start board-size) (mod current board-size)) 10 1))
+
 (defn cell-range [current-id]
-  (let [start (int @ship-setting-start) current (int current-id)]
-    (range (min start current) (inc (max start current)))))
+  "Returns range or an empty list."
+  (let [start (int @ship-setting-start)
+        current (int current-id)
+        range (range
+                (min start current)
+                (inc (max start current))
+                (cell-range-steps start current))]
+    (if (< (count range) (inc board-size)) range '())))
 
 (defn change-board [board board_idx indexes value]
     (if (not (empty? indexes))
