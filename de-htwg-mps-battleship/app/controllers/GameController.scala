@@ -11,14 +11,22 @@ import de.htwg.mps.battleship.Battleship
   */
 class GameController @Inject() (system: ActorSystem) extends Controller {
 
-  var default_settings = Battleship.setUp()
+  var defaultSettings = Battleship.setUp()
 
   def setShip(start: Int, end: Int) = Action { request =>
     Ok("")
   }
 
   def getBoardSize = Action { request =>
-    Ok("")
+    Ok(defaultSettings(0).board.field.length.toString())
+  }
+
+  def getNumberOfPlayers = Action { request =>
+    Ok(defaultSettings.length.toString())
+  }
+
+  def getShips = Action { request =>
+    Ok(defaultSettings(0).board.ships.map(_.size).toString().replace("List", ""))
   }
 }
 
