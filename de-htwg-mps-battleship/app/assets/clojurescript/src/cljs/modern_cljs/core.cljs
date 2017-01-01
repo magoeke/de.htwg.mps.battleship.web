@@ -11,6 +11,7 @@
 (defn initial-game [] (map (fn [] empty-board) (range number-of-players)))
 
 (def game-state (r/atom (initial-game)))
+(def game-state-buf (r/atom (initial-game)))
 (def ship-setting (r/atom false))
 (def ship-setting-start (r/atom -1))
 
@@ -27,7 +28,7 @@
         value)) (list-with-index (get board 0))))) (list-with-index game-state)))
 
 (defn cell-range-steps [start current]
-  (if (= (mod start board-size) (mod current board-size)) 10 1))
+  (if (= (mod start board-size) (mod current board-size)) board-size 1))
 
 (defn cell-range [current-id]
   "Returns range or an empty list."
@@ -48,16 +49,28 @@
         value)
       board))
 
+(defn start-moving [id]
+  (println id)
+  (reset! ship-setting-start id)
+  (reset! game-state-buf @game-state))
+
+(defn stop-moving []
+  (reset! game-state @game-state-buf)
+  (reset! ship-setting-start -1))
+
+(defn moving [id]
+  (if (= @ship-setting-start -1) (start-moving id))
+  (reset! game-state (change-board @game-state 0 (cell-range id) :set)))
+
 (defn cell-mouse-move [evt]
-  (if (not= @ship-setting-start -1)
-    (reset! game-state (change-board @game-state 0 (cell-range (-> evt .-target .-id)) :set))))
+  (if (= (-> evt .-buttons) 1)
+    (moving (-> evt .-target .-id))))
 
-(defn cell-mouse-down [evt]
-    (reset! ship-setting-start (-> evt .-target .-id)))
+(defn general-mouse-up [evt]
+  (reset! game-state @game-state-buf)
+  (reset! ship-setting-start -1))
 
-(defn cell-mouse-up [evt]
-    ; send coordinates to server
-    (reset! ship-setting-start -1))
+(.addEventListener (.querySelector js/document "body") "mouseup" general-mouse-up)
 
 (defn cell-class [state]
   (cond
@@ -69,8 +82,7 @@
                                   :key (str "game-cell" id)
                                   :id id
                                   :on-mouse-move cell-mouse-move
-                                  :on-mouse-down cell-mouse-down
-                                  :on-mouse-up cell-mouse-up}])
+                                  :draggable false}])
 
 (defn output-game [board]
   (let [cells (list-with-index board)]
