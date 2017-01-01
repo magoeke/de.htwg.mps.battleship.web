@@ -12,8 +12,8 @@
 
 (def game-state (r/atom (initial-game)))
 (def game-state-buf (r/atom (initial-game)))
-(def ship-setting (r/atom false))
 (def ship-setting-start (r/atom -1))
+(def settable-ships (r/atom '(5 4 4 3 3 3 2 2 2 2)))
 
 (defn list-with-index [board] (map (fn [a b] (vector a b)) board (range (count board))))
 (defn number-of-rows [] (.ceil js/Math (/ number-of-players 2)))
@@ -30,6 +30,12 @@
 (defn cell-range-steps [start current]
   (if (= (mod start board-size) (mod current board-size)) board-size 1))
 
+(defn range-valid? [range]
+  (let [max (inc (apply max @settable-ships))
+        min (dec (apply min @settable-ships))
+        count (count range)]
+    (if (< min count max) true false)))
+
 (defn cell-range [current-id]
   "Returns range or an empty list."
   (let [start (int @ship-setting-start)
@@ -38,7 +44,7 @@
                 (min start current)
                 (inc (max start current))
                 (cell-range-steps start current))]
-    (if (< (count range) (inc board-size)) range '())))
+    (if (range-valid? range) range '())))
 
 (defn change-board [board board_idx indexes value]
     (if (not (empty? indexes))
@@ -49,8 +55,23 @@
         value)
       board))
 
+(defn set-cell [range state] (change-board @game-state-buf 0 range state))
+
+(defn remove-one [input tmp element]
+  (if (empty? input)
+    tmp
+    (let [first (first input)
+          rest (rest input)]
+      (if (= first element)
+        (concat tmp rest)
+        (remove-one rest (conj tmp first) element)))))
+
+(defn save-ship [range]
+  (if (not (empty? range)) (reset! game-state (set-cell range :set)))
+  (reset! settable-ships (remove-one @settable-ships '() (count range)))
+  (println @settable-ships))
+
 (defn start-moving [id]
-  (println id)
   (reset! ship-setting-start id)
   (reset! game-state-buf @game-state))
 
@@ -60,15 +81,17 @@
 
 (defn moving [id]
   (if (= @ship-setting-start -1) (start-moving id))
-  (reset! game-state (change-board @game-state-buf 0 (cell-range id) :set)))
+  (reset! game-state (set-cell (cell-range id) :set)))
 
 (defn cell-mouse-move [evt]
   (if (= (-> evt .-buttons) 1)
     (moving (-> evt .-target .-id))))
 
 (defn general-mouse-up [evt]
-  (reset! game-state @game-state-buf)
-  (reset! ship-setting-start -1))
+  (.stopImmediatePropagation evt)
+  (let [id (-> evt .-target .-id)]
+    (save-ship (cell-range id))
+    (reset! ship-setting-start -1)))
 
 (.addEventListener (.querySelector js/document "body") "mouseup" general-mouse-up)
 
@@ -100,8 +123,6 @@
           [output-game (get board 0)]])]))
 
 (defn start [] (r/render-component [split-screen] (.getElementById js/document "content")))
-
-(reset! game-state (change-cell @game-state 1 0 :hit))
 
 ;; shows
 (start)
