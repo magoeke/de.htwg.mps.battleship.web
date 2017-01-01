@@ -60,7 +60,7 @@
 
 (defn moving [id]
   (if (= @ship-setting-start -1) (start-moving id))
-  (reset! game-state (change-board @game-state 0 (cell-range id) :set)))
+  (reset! game-state (change-board @game-state-buf 0 (cell-range id) :set)))
 
 (defn cell-mouse-move [evt]
   (if (= (-> evt .-buttons) 1)
