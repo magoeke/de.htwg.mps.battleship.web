@@ -2,36 +2,79 @@ package controllers
 
 import javax.inject.Inject
 
-import akka.actor.{Actor, ActorSystem}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.stream.Materializer
+import de.htwg.mps.battleship.controller.{ControllerFactory, RegisterUI, UpdateUI}
 import play.api.mvc._
-import de.htwg.mps.battleship.Battleship
+import de.htwg.mps.battleship.{Battleship, Point}
+//import de.htwg.mps.battleship.controller.command.SetShip
+import de.htwg.mps.battleship.controller.command._
+import play.api.libs.json._
+import play.api.libs.streams.ActorFlow
+
+import scala.collection.mutable.ListBuffer
+import scala.util.Try
 
 /**
   * Created by max on 01.01.17.
   */
-class GameController @Inject() (system: ActorSystem) extends Controller {
+class GameController @Inject() (implicit system: ActorSystem, materializer: Materializer) extends Controller {
 
   var defaultSettings = Battleship.setUp()
 
-  def setShip(start: Int, end: Int) = Action { request =>
-    Ok("")
+  def initWebSocket = WebSocket.accept[String, String] { request =>
+    ActorFlow.actorRef(out => GameSocketActor.props(out))
   }
 
-  def getBoardSize = Action { request =>
-    Ok(defaultSettings(0).board.field.length.toString())
+  private def getBoardSize = defaultSettings(0).board.field.length
+  private def getShips = defaultSettings(0).board.ships
+
+  object GameSocketActor {
+    def props(out: ActorRef) = Props(new GameSocketActor(out))
   }
 
-  def getNumberOfPlayers = Action { request =>
-    Ok(defaultSettings.length.toString())
+  class GameSocketActor(out: ActorRef) extends Actor {
+    val shipCommands = ListBuffer[SetShip]()
+    val gameActor = ControllerFactory.create(system, defaultSettings union List())
+    val playerName = defaultSettings(0).name
+
+    // register
+    gameActor ! RegisterUI
+
+    override def receive = {
+      case msg: String => handleWebSocketCommands(msg)
+      case infos: UpdateUI => out ! answer(infos)
+    }
+
+    private def answer(infos: UpdateUI) = {
+      println(infos)
+      Json.stringify(JsObject(Seq(
+        "type" -> JsString("setShip"),
+        "ships" -> Json.toJson(infos.setableShips),
+        "board" -> Json.toJson(infos.boards(0).flatMap(row => row.map(_.toString())))
+      )))
+    }
+
+    private def handleWebSocketCommands(msg: String): Unit = {
+      val json = Try(Json.parse(msg)).getOrElse(null)
+      println(json)
+      (json \ "type").as[String] match {
+        case "setShip" => saveShip((json \ "start").as[String], (json \ "end").as[String])
+        case _ => ;
+      }
+    }
+
+    private def saveShip(start: String, end: String) = {
+      val command = SetShip(calculatePoint(start.toInt), calculatePoint(end.toInt))
+      println(command)
+      gameActor ! command
+    }
+
+    private def calculatePoint(index: Int) : Point = calculatePoint(index, getBoardSize)
+    private def calculatePoint(index:Int, boardSize: Int) = {
+      val x = index % boardSize
+      Point((index - x) / boardSize, x )
+    }
   }
 
-  def getShips = Action { request =>
-    Ok(defaultSettings(0).board.ships.map(_.size).toString().replace("List", ""))
-  }
-}
-
-class UiActor extends Actor {
-  override def receive: Receive = {
-    case _ => println("message arrived...")
-  }
 }

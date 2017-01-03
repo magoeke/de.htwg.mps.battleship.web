@@ -3,11 +3,7 @@
 # ~~~~
 
 GET     /                                      controllers.Application.index
-
-POST    /ship/:start/:end                      controllers.GameController.setShip(start: Int, end:Int)
-GET     /game/board/size                       controllers.GameController.getBoardSize
-GET     /game/player/count                     controllers.GameController.getNumberOfPlayers
-GET     /game/ships                            controllers.GameController.getShips
+GET     /ws                                    controllers.GameController.initWebSocket
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file                          controllers.Assets.at(path="/public", file)
