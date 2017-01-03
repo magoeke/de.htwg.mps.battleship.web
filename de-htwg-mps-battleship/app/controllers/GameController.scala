@@ -19,8 +19,7 @@ import scala.util.Try
   * Created by max on 01.01.17.
   */
 class GameController @Inject() (implicit system: ActorSystem, materializer: Materializer) extends Controller {
-
-  var defaultSettings = Battleship.setUp()
+  val defaultSettings = Battleship.setUp()
 
   def initWebSocket = WebSocket.accept[String, String] { request =>
     ActorFlow.actorRef(out => GameSocketActor.props(out))
@@ -47,11 +46,11 @@ class GameController @Inject() (implicit system: ActorSystem, materializer: Mate
     }
 
     private def answer(infos: UpdateUI) = {
-      println(infos)
+      val gameInformation = infos.gameInformation.filter(info => info.player == playerName).head
       Json.stringify(JsObject(Seq(
         "type" -> JsString("setShip"),
-        "ships" -> Json.toJson(infos.setableShips),
-        "board" -> Json.toJson(infos.boards(0).flatMap(row => row.map(_.toString())))
+        "ships" -> Json.toJson(gameInformation.setableShips),
+        "board" -> Json.toJson(gameInformation.boards(0).flatMap(row => row.map(_.toString())))
       )))
     }
 
