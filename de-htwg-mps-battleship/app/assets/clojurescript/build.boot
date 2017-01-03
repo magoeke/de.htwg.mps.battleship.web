@@ -12,6 +12,7 @@
                  [weasel "0.7.0"]                      ;; needed by bREPL
                  [org.clojure/tools.nrepl "0.2.12"]    ;; needed by bREPL
                  [reagent "0.6.0"]
+                 [cljs-ajax "0.5.8"]
                  ])
 
 (require '[adzerk.boot-cljs :refer [cljs]]

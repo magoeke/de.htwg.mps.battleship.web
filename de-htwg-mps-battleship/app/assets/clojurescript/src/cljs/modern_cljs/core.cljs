@@ -1,6 +1,8 @@
 ;; create the main project namespace
 (ns modern-cljs.core
-  (:require [reagent.core :as r]))
+  (:require [reagent.core :as r]
+            [ajax.core :refer [GET POST]]
+            [clojure.string :as string]))
 
 ;; enable cljs to print to the JS console of the browser
 (enable-console-print!)
@@ -8,10 +10,10 @@
 (def number-of-players 2)
 (def board-size 10)
 (def empty-board (repeat (* board-size board-size) :empty))
-(defn initial-game [] (map (fn [] empty-board) (range number-of-players)))
+(defn initial-boards [count] (map (fn [] empty-board) (range count)))
 
-(def game-state (r/atom (initial-game)))
-(def game-state-buf (r/atom (initial-game)))
+(def game-state (r/atom (initial-boards 1)))
+(def game-state-buf (r/atom (initial-boards 1)))
 (def ship-setting-start (r/atom -1))
 (def settable-ships (r/atom '(5 4 4 3 3 3 2 2 2 2)))
 
@@ -68,16 +70,11 @@
 
 (defn save-ship [range]
   (if (not (empty? range)) (reset! game-state (set-cell range :set)))
-  (reset! settable-ships (remove-one @settable-ships '() (count range)))
-  (println @settable-ships))
+  (reset! settable-ships (remove-one @settable-ships '() (count range))))
 
 (defn start-moving [id]
   (reset! ship-setting-start id)
   (reset! game-state-buf @game-state))
-
-(defn stop-moving []
-  (reset! game-state @game-state-buf)
-  (reset! ship-setting-start -1))
 
 (defn moving [id]
   (if (= @ship-setting-start -1) (start-moving id))
@@ -88,12 +85,13 @@
     (moving (-> evt .-target .-id))))
 
 (defn general-mouse-up [evt]
-  (.stopImmediatePropagation evt)
-  (let [id (-> evt .-target .-id)]
-    (save-ship (cell-range id))
-    (reset! ship-setting-start -1)))
+    (let [id (-> evt .-target .-id)]
+      (if (not= @ship-setting-start -1) (save-ship (cell-range id)))
+      (reset! ship-setting-start -1)))
 
 (.addEventListener (.querySelector js/document "body") "mouseup" general-mouse-up)
+(.addEventListener (.querySelector js/document "body") "mousedown"
+  (fn [evt] (reset! ship-setting-start -1)))
 
 (defn cell-class [state]
   (cond
@@ -107,22 +105,34 @@
                                   :on-mouse-move cell-mouse-move
                                   :draggable false}])
 
-(defn output-game [board]
+(defn output-board [board]
   (let [cells (list-with-index board)]
     [:div {:class "board"}
       (doall (map (fn [cell] (game-cell (get cell 1) (get cell 0))) cells))]))
 
-(defn split-screen
-  []
+(defn split-screen []
   (let [rows (number-of-rows)]
     [:div {:style {:height "100vh"}}
       (for [board (list-with-index @game-state)]
         [:div {:key (str "screen" (get board 1))
                :style {:height (str (/ 100 rows) "vh")}
                :class (if (= 0 (mod (get board 1) 2)) "left-screen" "right-screen")}
-          [output-game (get board 0)]])]))
+          [output-board (get board 0)]])]))
 
-(defn start [] (r/render-component [split-screen] (.getElementById js/document "content")))
+(defn output-ships [ships]
+  [:div {:class "ships"} (str "Ships: " (clojure.string/join " " (sort ships)))])
+
+(defn setup-screen []
+    [:div {:class "setup"}
+      [output-ships @settable-ships]
+      [output-board (nth @game-state 0)]])
+
+(defn render [template] (r/render-component [template] (.getElementById js/document "content")))
 
 ;; shows
-(start)
+(render setup-screen)
+
+
+; (POST "/game")
+(POST "/game" {:params {:message "Hello World"
+                  :user    "Bob"}})
