@@ -16,6 +16,9 @@
 (def game-state-buf (r/atom (initial-boards 1)))
 (def ship-setting-start (r/atom -1))
 (def settable-ships (r/atom '(5 4 4 3 3 3 2 2 2 2)))
+(def websocket (atom nil))
+
+(defn send! [map] (.send @websocket (.stringify js/JSON (clj->js map))))
 
 (defn list-with-index [board] (map (fn [a b] (vector a b)) board (range (count board))))
 (defn number-of-rows [] (.ceil js/Math (/ number-of-players 2)))
@@ -68,10 +71,6 @@
         (concat tmp rest)
         (remove-one rest (conj tmp first) element)))))
 
-(defn save-ship [range]
-  (if (not (empty? range)) (reset! game-state (set-cell range :set)))
-  (reset! settable-ships (remove-one @settable-ships '() (count range))))
-
 (defn start-moving [id]
   (reset! ship-setting-start id)
   (reset! game-state-buf @game-state))
@@ -85,9 +84,9 @@
     (moving (-> evt .-target .-id))))
 
 (defn general-mouse-up [evt]
-    (let [id (-> evt .-target .-id)]
-      (if (not= @ship-setting-start -1) (save-ship (cell-range id)))
-      (reset! ship-setting-start -1)))
+  (let [id (-> evt .-target .-id)]
+    (if (not= @ship-setting-start -1) (send! {:type "setShip" :start @ship-setting-start :end id}))
+    (reset! ship-setting-start -1)))
 
 (.addEventListener (.querySelector js/document "body") "mouseup" general-mouse-up)
 (.addEventListener (.querySelector js/document "body") "mousedown"
@@ -129,10 +128,37 @@
 
 (defn render [template] (r/render-component [template] (.getElementById js/document "content")))
 
-;; shows
-(render setup-screen)
+(defn replace-board [boards index new-board]
+  (map
+    (fn [board] (if (not= (get board 1)) board new-board))
+    (list-with-index boards)))
 
+(defn cell-value [cell]
+  (case cell
+    "EMPTY" :empty
+    "SHIP" :set))
 
-; (POST "/game")
-(POST "/game" {:params {:message "Hello World"
-                  :user    "Bob"}})
+(defn update-setup [json]
+    (reset! settable-ships (into '() (get json :ships)))
+    (reset! game-state (replace-board @game-state 0 (map cell-value (get json :board)))))
+
+(defn websocket-open [] (println "open")(render setup-screen))
+(defn websocket-close [] (println "close"))
+(defn websocket-error [e] (println (str "error: " e)))
+(defn websocket-message [msg]
+    (println (.-data msg))
+    (let [data (js->clj (.parse js/JSON (.-data msg)) :keywordize-keys true)]
+      (case (get data :type)
+        "setShip" (update-setup data))))
+
+(defn setup-websocket [functions]
+  (reset! websocket (js/WebSocket. "ws://localhost:9000/ws"))
+  (doall
+    (map #(aset @websocket (first %) (second %))
+         [["onopen" (get functions :onopen)]
+          ["onclose" (get functions :onclose)]
+          ["onerror" (get functions :onerror)]
+          ["onmessage" (get functions :onmessage)]])))
+
+(setup-websocket {:onmessage websocket-message
+                  :onopen websocket-open})
