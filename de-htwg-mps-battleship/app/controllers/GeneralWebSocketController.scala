@@ -56,18 +56,6 @@ class GeneralWebSocketController @Inject() (implicit system: ActorSystem, materi
         case _ => ;
       }
     }
-
-    /*private def saveShip(start: String, end: String) = {
-      val command = SetShip(calculatePoint(start.toInt), calculatePoint(end.toInt))
-      println(command)
-      gameActor ! command
-    }
-
-    private def calculatePoint(index: Int) : Point = calculatePoint(index, getBoardSize)
-    private def calculatePoint(index:Int, boardSize: Int) = {
-      val x = index % boardSize
-      Point((index - x) / boardSize, x )
-    }*/
   }
 
 }
