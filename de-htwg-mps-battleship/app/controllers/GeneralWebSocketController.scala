@@ -14,7 +14,9 @@ import scala.util.Try
 /**
   * Created by max on 01.01.17.
   */
-class GeneralWebSocketController @Inject() (implicit system: ActorSystem, materializer: Materializer) extends Controller {
+class GeneralWebSocketController @Inject() (implicit system: ActorSystem,
+                                            materializer: Materializer,
+                                            gameBroker: IGameBroker) extends Controller {
 
   def initWebSocket = WebSocket.accept[String, String] { request =>
     ActorFlow.actorRef(out => WebSocketActor.props(out))
@@ -28,11 +30,11 @@ class GeneralWebSocketController @Inject() (implicit system: ActorSystem, materi
   }
 
   class WebSocketActor(out: ActorRef) extends Actor {
-    val setShip = system.actorOf(Props[SetShipActor])
 
+    val setShip = system.actorOf(Props[SetShipActor])
     val playerName = "player0"
-    // register
-    //gameActor ! RegisterUI
+
+    setShip ! StartShipSetting
 
     override def receive = {
       case msg: String => handleWebSocketCommands(msg)

@@ -1,31 +1,25 @@
 package controllers
 
-import java.util.UUID
-
-import akka.actor.{Actor, ActorRef, ActorSystem}
-import akka.actor.Actor.Receive
+import akka.actor.{Actor, ActorRef}
 import de.htwg.mps.battleship.{Battleship, Point}
-import de.htwg.mps.battleship.controller.{BattleshipController, ControllerFactory, RegisterUI, UpdateUI}
+import de.htwg.mps.battleship.controller.{BattleshipController, UpdateUI}
 import de.htwg.mps.battleship.controller.command.{Command, SetShip}
 
-import scala.collection.mutable.{ListBuffer, Map}
+import scala.collection.mutable.ListBuffer
 
 /**
   * Created by max on 04.01.17.
   */
-class SetShipActor(system: ActorSystem) extends Actor{
+class SetShipActor() extends Actor{
 
   val defaultSettings = Battleship.setUp()
   val tmpGame = new BattleshipController(defaultSettings)
-  //val tmpGame = ControllerFactory.create(system, defaultSettings)
   val shipCommands = ListBuffer[SetShip]()
   val playerName = defaultSettings.head.name
 
-  //tmpGame ! RegisterUI
-
   override def receive: Receive = {
     case SendShip(start, end) => createSetShip(sender(), start, end)
-    case update: UpdateUI =>
+    case StartShipSetting => sender() ! UpdateUI(tmpGame.currentPlayer.name, tmpGame.collectGameInformation)
   }
 
   private def createSetShip(sender: ActorRef, start: String, end: String) = {
@@ -55,3 +49,4 @@ case class CommandValid(command: Command, ships: List[Int])
 // Message
 case class SendShip(start: String, end: String)
 case object StartGame
+case object StartShipSetting
