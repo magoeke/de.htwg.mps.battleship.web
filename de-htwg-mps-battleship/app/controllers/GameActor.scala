@@ -5,6 +5,7 @@ import de.htwg.mps.battleship.Battleship
 import de.htwg.mps.battleship.controller.{ControllerFactory, GameInformation, RegisterUI, UpdateUI}
 import de.htwg.mps.battleship.controller.command.{Command, Nothing, SetShip}
 
+import scala.collection.immutable.ListMap
 import scala.collection.mutable.{ListBuffer, Map}
 
 
@@ -20,7 +21,6 @@ class GameActor(system:ActorSystem) extends Actor {
 
   override def receive = {
     case JoinSpecificGame(name, ships, actor) => join(name, ships, actor); game ! Nothing // send Nothing to get game infos
-    //case command: Command => game ! command
     case CommandProxy(player, command) => if(player == currentPlayer) game ! command
     case update: UpdateUI => currentPlayer = mapName(update.currentPlayer); broadcast(modify(update))
   }
@@ -40,12 +40,13 @@ class GameActor(system:ActorSystem) extends Actor {
   private def join(name: String, ships: List[SetShip], actor: ActorRef) = {
     players += actor
     playerNameMapping += ("player"+playerNameMapping.size -> name)
+    println(playerNameMapping)
     playerToShips += (name -> ships)
     if(playerNameMapping.size == 2) { startGame() }
   }
 
   private def startGame() = {
-    for((k, v) <- playerNameMapping) { playerToShips(v).foreach(game ! _) }
+    for((k, v) <- ListMap(playerNameMapping.toSeq.sortBy(_._1):_*)) { playerToShips(v).foreach(game ! _) }
     playerToShips.clear()
     broadcast(StartGame)
   }
