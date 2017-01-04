@@ -14,13 +14,15 @@ class GameActor(system:ActorSystem) extends Actor {
   val players = ListBuffer[ActorRef]()
   val playerNameMapping = Map[String, String]()
   val playerToShips = Map[String, List[SetShip]]()
+  var currentPlayer: String = _
 
   game ! RegisterUI
 
   override def receive = {
     case JoinSpecificGame(name, ships, actor) => join(name, ships, actor); game ! Nothing // send Nothing to get game infos
-    case command: Command => game ! command
-    case update: UpdateUI => broadcast(modify(update))
+    //case command: Command => game ! command
+    case CommandProxy(player, command) => if(player == currentPlayer) game ! command
+    case update: UpdateUI => currentPlayer = mapName(update.currentPlayer); broadcast(modify(update))
   }
 
   private def broadcast(any: Any) = players.foreach(_ ! any)
@@ -50,3 +52,4 @@ class GameActor(system:ActorSystem) extends Actor {
 }
 
 case object StartGame
+case class CommandProxy(player: String, command: Command)

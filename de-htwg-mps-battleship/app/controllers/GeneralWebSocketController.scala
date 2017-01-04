@@ -47,7 +47,7 @@ class GeneralWebSocketController @Inject() (implicit system: ActorSystem,
 
     private def answer(infos: UpdateUI) = {
       val gameInformation = infos.gameInformation.filter(info => info.player == playerName).head
-      
+
       Json.stringify(JsObject(Seq(
         "type" -> JsString("update"),
         "ships" -> Json.toJson(gameInformation.setableShips),
@@ -59,7 +59,7 @@ class GeneralWebSocketController @Inject() (implicit system: ActorSystem,
       val json = Try(Json.parse(msg)).getOrElse(null)
       (json \ "type").as[String] match {
         case "setShip" => setShip ! SendShip(calculatePoint((json \ "start").as[String]), calculatePoint((json \ "end").as[String]))
-        case "fire" => println("fire"); gameActorRef ! Fire(calculatePoint((json \ "index").as[String]))
+        case "fire" => println("fire"); gameActorRef ! CommandProxy(playerName, Fire(calculatePoint((json \ "index").as[String])))
         case _ => ;
       }
     }
