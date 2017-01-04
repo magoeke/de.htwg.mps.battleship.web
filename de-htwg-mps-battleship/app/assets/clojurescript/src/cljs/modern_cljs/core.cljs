@@ -149,7 +149,7 @@
     (println (.-data msg))
     (let [data (js->clj (.parse js/JSON (.-data msg)) :keywordize-keys true)]
       (case (get data :type)
-        "setShip" (update-setup data))))
+        "update" (update-setup data))))
 
 (defn setup-websocket [functions]
   (reset! websocket (js/WebSocket. "ws://localhost:9000/ws"))
