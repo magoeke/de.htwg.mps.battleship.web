@@ -52,13 +52,13 @@
     (if (range-valid? range) range '())))
 
 (defn change-board [board board_idx indexes value]
-    (if (not (empty? indexes))
-      (change-board
-        (change-cell board board_idx (first indexes) value)
-        board_idx
-        (rest indexes)
-        value)
-      board))
+  (if (not (empty? indexes))
+    (change-board
+      (change-cell board board_idx (first indexes) value)
+      board_idx
+      (rest indexes)
+      value)
+    board))
 
 (defn set-cell [range state] (change-board @game-state-buf 0 range state))
 
@@ -88,26 +88,39 @@
     (if (not= @ship-setting-start -1) (send! {:type "setShip" :start @ship-setting-start :end id}))
     (reset! ship-setting-start -1)))
 
-(.addEventListener (.querySelector js/document "body") "mouseup" general-mouse-up)
-(.addEventListener (.querySelector js/document "body") "mousedown"
-  (fn [evt] (reset! ship-setting-start -1)))
+(defn general-mouse-down [evt] (reset! ship-setting-start -1))
+; (defn addEventListener [obj type function] (.addEventListener obj type function))
+; (defn removeEventListener [obj type function] (.removeEventListener obj type function))
+
+(defn register-general-listener []
+  (.addEventListener (.querySelector js/document "body") "mouseup" general-mouse-up)
+  (.addEventListener (.querySelector js/document "body") "mousedown" general-mouse-down))
+
+(defn deregister-general-listener []
+  (.removeEventListener (.querySelector js/document "body") "mouseup" general-mouse-up)
+  (.removeEventListener (.querySelector js/document "body") "mousedown" general-mouse-down))
+
 
 (defn cell-class [state]
   (cond
     (= state :empty) "empty"
     (= state :set) "set"
-    (= state :hit) "hit"))
+    (= state :hit) "hit"
+    (= state :miss) "miss"))
 
-(defn game-cell [id state] [:div {:class (str "game-cell" " " (cell-class state))
+(defn game-cell [id state listener] [:div {:class (str "game-cell" " " (cell-class state))
                                   :key (str "game-cell" id)
                                   :id id
-                                  :on-mouse-move cell-mouse-move
+                                  :on-mouse-move (get listener :on-mouse-move)
+                                  :on-click (get listener :on-click)
                                   :draggable false}])
 
-(defn output-board [board]
+(defn output-board [board listener]
   (let [cells (list-with-index board)]
     [:div {:class "board"}
-      (doall (map (fn [cell] (game-cell (get cell 1) (get cell 0))) cells))]))
+      (doall (map (fn [cell] (game-cell (get cell 1) (get cell 0) listener)) cells))]))
+
+(defn cell-click [evt] (send! {:type "fire" :index (-> evt .-target .-id)}))
 
 (defn split-screen []
   (let [rows (number-of-rows)]
@@ -116,17 +129,19 @@
         [:div {:key (str "screen" (get board 1))
                :style {:height (str (/ 100 rows) "vh")}
                :class (if (= 0 (mod (get board 1) 2)) "left-screen" "right-screen")}
-          [output-board (get board 0)]])]))
+          [output-board (get board 0) {:on-click cell-click}]])]))
 
 (defn output-ships [ships]
   [:div {:class "ships"} (str "Ships: " (clojure.string/join " " (sort ships)))])
 
 (defn setup-screen []
-    [:div {:class "setup"}
-      [output-ships @settable-ships]
-      [output-board (nth @game-state 0)]])
+  [:div {:class "setup"}
+    [output-ships @settable-ships]
+    [output-board (nth @game-state 0) {:on-mouse-move cell-mouse-move}]])
 
-(defn render [template] (r/render-component [template] (.getElementById js/document "content")))
+(defn render [template handle-general-listener]
+    (handle-general-listener)
+    (r/render-component [template] (.getElementById js/document "content")))
 
 (defn replace-board [boards index new-board]
   (map
@@ -136,29 +151,42 @@
 (defn cell-value [cell]
   (case cell
     "EMPTY" :empty
-    "SHIP" :set))
+    "SHIP" :set
+    "HIT" :hit
+    "MISS" :miss))
 
 (defn update-setup [json]
-    (reset! settable-ships (into '() (get json :ships)))
-    (reset! game-state (replace-board @game-state 0 (map cell-value (get json :board)))))
+  (reset! settable-ships (into '() (get json :ships)))
+  (reset! game-state (map
+    (fn [board] (map cell-value board))
+    (get json :board))))
 
-(defn websocket-open [] (println "open")(render setup-screen))
+(defn create-lightbox [] [:div {:class "modal"}
+  [:div {:class "modal-content"}
+    [:div {:class "sk-folding-cube"}
+      [:div {:class "sk-cube1 sk-cube"}]
+      [:div {:class "sk-cube2 sk-cube"}]
+      [:div {:class "sk-cube4 sk-cube"}]
+      [:div {:class "sk-cube3 sk-cube"}]]]])
+
+(defn websocket-open [] (println "open")(render setup-screen register-general-listener))
 (defn websocket-close [] (println "close"))
 (defn websocket-error [e] (println (str "error: " e)))
 (defn websocket-message [msg]
-    (println (.-data msg))
-    (let [data (js->clj (.parse js/JSON (.-data msg)) :keywordize-keys true)]
-      (case (get data :type)
-        "update" (update-setup data))))
+  (let [data (js->clj (.parse js/JSON (.-data msg)) :keywordize-keys true)]
+    (case (get data :type)
+      "update" (update-setup data)
+      "waitForSecondPlayer" (render create-lightbox (fn [] (println "nothing")))
+      "playersJoined" (render split-screen deregister-general-listener))))
 
 (defn setup-websocket [functions]
   (reset! websocket (js/WebSocket. "ws://localhost:9000/ws"))
   (doall
     (map #(aset @websocket (first %) (second %))
-         [["onopen" (get functions :onopen)]
-          ["onclose" (get functions :onclose)]
-          ["onerror" (get functions :onerror)]
-          ["onmessage" (get functions :onmessage)]])))
+      [["onopen" (get functions :onopen)]
+       ["onclose" (get functions :onclose)]
+       ["onerror" (get functions :onerror)]
+       ["onmessage" (get functions :onmessage)]])))
 
 (setup-websocket {:onmessage websocket-message
                   :onopen websocket-open})

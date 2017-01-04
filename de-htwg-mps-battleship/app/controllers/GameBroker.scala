@@ -1,13 +1,10 @@
 package controllers
 
-import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import com.google.inject.ImplementedBy
-import de.htwg.mps.battleship.controller.command.Command
-
-import scala.collection.mutable.Map
+import de.htwg.mps.battleship.controller.command.SetShip
 
 @ImplementedBy(classOf[GameBroker])
 trait IGameBroker {
@@ -16,38 +13,35 @@ trait IGameBroker {
 
 @Singleton
 class GameBroker @Inject() (implicit system: ActorSystem) extends IGameBroker {
-  override def actorRef: ActorRef = system.actorOf(Props[GameBrokerActor])
+  val gameBrokerActor = system.actorOf(Props(new GameBrokerActor(system)))
+  override def actorRef: ActorRef = gameBrokerActor
+}
 
-  class GameBrokerActor extends Actor {
+class GameBrokerActor(system: ActorSystem) extends Actor {
 
-    val maxParticipants: Int = 2
-    var participants: Int = 0
-    var currentGame: UUID = UUID.randomUUID()
-    var games: Map[UUID, ActorRef] = Map[UUID, ActorRef]()
+  val maxParticipants: Int = 2
+  var participants: Int = 0
+  var currentActorRef: ActorRef = gameActorRef
 
-    override def receive = {
-      case JoinGame => sender() ! Game(join(sender())); games(currentGame) ! JoinGame(sender())
-      case CommandProxy(id, command) => games(id) ! command
-    }
+  override def receive = {
+    case JoinGame(name, ships) => sender() ! Game(join(sender())); currentActorRef ! JoinSpecificGame(name, ships, sender())
+  }
 
-    private def join(actorRef: ActorRef) = {
-      if(participants >= maxParticipants) { reset }
-      participants += 1
-      if(!games.exists(_._1 == currentGame)) { gameActor }
-      currentGame
-    }
+  private def join(actorRef: ActorRef) = {
+    if(participants >= maxParticipants) { reset() }
+    participants += 1
+    currentActorRef
+  }
 
-    private def gameActor = system.actorOf(Props(new GameActor(system)))
+  private def gameActorRef = system.actorOf(Props(new GameActor(system)))
 
-    private def reset = {
-      participants = 0
-      currentGame = UUID.randomUUID()
-    }
+  private def reset() = {
+    participants = 0
+    currentActorRef = gameActorRef
   }
 }
 
 // Messages
-case object JoinGame
-case class JoinGame(actorRef: ActorRef)
-case class Game(id: UUID)
-case class CommandProxy(id: UUID, command: Command)
+case class JoinGame(name: String, ships: List[SetShip])
+case class JoinSpecificGame(name: String, ships: List[SetShip], actorRef: ActorRef)
+case class Game(gameActorRef: ActorRef)
