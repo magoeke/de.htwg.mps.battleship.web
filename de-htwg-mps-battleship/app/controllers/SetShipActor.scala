@@ -30,15 +30,14 @@ class SetShipActor(system: ActorSystem) extends Actor{
 
   private def createSetShip(sender: ActorRef, start: String, end: String) = {
     val command = SetShip(calculatePoint(start.toInt), calculatePoint(end.toInt))
-    /*val tmpSetableShips = tmpGame.setableShips(playerName)
+    val tmpSetableShips = getSetableShips
     tmpGame.handleCommand(command)
-    if(tmpSetableShips != tmpGame.setableShips(playerName)) {
+    if(tmpSetableShips != getSetableShips) {
       shipCommands += command
       sender ! UpdateUI(tmpGame.currentPlayer.name, tmpGame.collectGameInformation)
     }
 
-    if(tmpGame.setableShips(playerName).isEmpty) { sender ! StartGame }
-*/
+    if(getSetableShips.isEmpty) { sender ! StartGame }
   }
 
   private def calculatePoint(index: Int) : Point = calculatePoint(index, defaultSettings.head.board.field.length)
@@ -46,6 +45,8 @@ class SetShipActor(system: ActorSystem) extends Actor{
     val x = index % boardSize
     Point((index - x) / boardSize, x )
   }
+
+  private def getSetableShips = tmpGame.collectGameInformation.filter(info=> info.player == playerName).head.setableShips
 
 }
 // Datastructure
