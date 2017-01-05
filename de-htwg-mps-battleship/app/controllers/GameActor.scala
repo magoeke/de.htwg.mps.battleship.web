@@ -1,9 +1,9 @@
 package controllers
 
-import akka.actor.{Actor, ActorRef, ActorSystem}
+import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill}
 import de.htwg.mps.battleship.Battleship
-import de.htwg.mps.battleship.controller.{ControllerFactory, GameInformation, RegisterUI, UpdateUI}
-import de.htwg.mps.battleship.controller.command.{Command, Nothing, SetShip}
+import de.htwg.mps.battleship.controller._
+import de.htwg.mps.battleship.controller.command.{Command, Nothing, QuitGame, SetShip}
 
 import scala.collection.immutable.ListMap
 import scala.collection.mutable.{ListBuffer, Map}
@@ -23,6 +23,8 @@ class GameActor(system:ActorSystem) extends Actor {
     case JoinSpecificGame(name, ships, actor) => join(name, ships, actor); game ! Nothing // send Nothing to get game infos
     case CommandProxy(player, command) => if(player == currentPlayer) game ! command
     case update: UpdateUI => currentPlayer = mapName(update.currentPlayer); broadcast(modify(update))
+    case LeaveGame(player) => handleQuit(sender(), player)
+    case Winner(player) => broadcast(Winner(mapName(player))); quit();
   }
 
   private def broadcast(any: Any) = players.foreach(_ ! any)
@@ -40,7 +42,6 @@ class GameActor(system:ActorSystem) extends Actor {
   private def join(name: String, ships: List[SetShip], actor: ActorRef) = {
     players += actor
     playerNameMapping += ("player"+playerNameMapping.size -> name)
-    println(playerNameMapping)
     playerToShips += (name -> ships)
     if(playerNameMapping.size == 2) { startGame() }
   }
@@ -50,7 +51,22 @@ class GameActor(system:ActorSystem) extends Actor {
     playerToShips.clear()
     broadcast(StartGame)
   }
+
+  private def handleQuit(actorRef: ActorRef, player: String) = {
+    players -= actorRef
+    playerNameMapping.map(_.swap) -= player
+    if(players.length == 1) {
+      players.head ! Winner(playerNameMapping.head._2)
+      quit()
+    }
+  }
+
+  private def quit() = {
+    game ! PoisonPill
+    self ! PoisonPill
+  }
 }
 
 case object StartGame
+case class LeaveGame(player: String)
 case class CommandProxy(player: String, command: Command)

@@ -141,7 +141,7 @@
 
 (defn render [template handle-general-listener]
     (handle-general-listener)
-    (r/render-component [template] (.getElementById js/document "content")))
+    (r/render-component template (.getElementById js/document "content")))
 
 (defn replace-board [boards index new-board]
   (map
@@ -161,23 +161,31 @@
     (fn [board] (map cell-value board))
     (get json :board))))
 
-(defn create-lightbox [] [:div {:class "modal"}
-  [:div {:class "modal-content"}
-    [:div {:class "sk-folding-cube"}
-      [:div {:class "sk-cube1 sk-cube"}]
-      [:div {:class "sk-cube2 sk-cube"}]
-      [:div {:class "sk-cube4 sk-cube"}]
-      [:div {:class "sk-cube3 sk-cube"}]]]])
+(defn create-lightbox []
+  [:div {:class "modal"}
+    [:div {:class "modal-content"}
+      [:div {:class "sk-folding-cube"}
+        [:div {:class "sk-cube1 sk-cube"}]
+        [:div {:class "sk-cube2 sk-cube"}]
+        [:div {:class "sk-cube4 sk-cube"}]
+        [:div {:class "sk-cube3 sk-cube"}]]]])
 
-(defn websocket-open [] (println "open")(render setup-screen register-general-listener))
+(defn end-dialog [data]
+  [:div {:class "modal"
+         :style (if (get data :won) {:background-color "cyan"})}
+    [:div {:class "modal-content"}
+      (if (get data :won) "You Won!" "Game Over")]])
+
+(defn websocket-open [] (println "open")(render [setup-screen] register-general-listener))
 (defn websocket-close [] (println "close"))
 (defn websocket-error [e] (println (str "error: " e)))
 (defn websocket-message [msg]
   (let [data (js->clj (.parse js/JSON (.-data msg)) :keywordize-keys true)]
     (case (get data :type)
       "update" (update-setup data)
-      "waitForSecondPlayer" (render create-lightbox (fn [] (println "nothing")))
-      "playersJoined" (render split-screen deregister-general-listener))))
+      "waitForSecondPlayer" (render [create-lightbox] (fn [] (println "nothing")))
+      "playersJoined" (render [split-screen] deregister-general-listener)
+      "winner" (render [end-dialog data] (fn [] (println "nothing"))))))
 
 (defn setup-websocket [functions]
   (reset! websocket (js/WebSocket. "ws://localhost:9000/ws"))
