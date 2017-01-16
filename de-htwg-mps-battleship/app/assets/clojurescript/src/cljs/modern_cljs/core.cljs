@@ -171,10 +171,13 @@
         [:div {:class "sk-cube3 sk-cube"}]]]])
 
 (defn end-dialog [data]
+  (println data)
   [:div {:class "modal"
          :style (if (get data :won) {:background-color "cyan"})}
     [:div {:class "modal-content"}
       (if (get data :won) "You Won!" "Game Over")]])
+
+(defn nothing [] (println ""))
 
 (defn websocket-open [] (println "open")(render [setup-screen] register-general-listener))
 (defn websocket-close [] (println "close"))
@@ -183,9 +186,9 @@
   (let [data (js->clj (.parse js/JSON (.-data msg)) :keywordize-keys true)]
     (case (get data :type)
       "update" (update-setup data)
-      "waitForSecondPlayer" (render [create-lightbox] (fn [] (println "nothing")))
+      "waitForSecondPlayer" (render [create-lightbox] nothing)
       "playersJoined" (render [split-screen] deregister-general-listener)
-      "winner" (render [end-dialog data] (fn [] (println "nothing"))))))
+      "winner" (render [end-dialog data] nothing))))
 
 (defn setup-websocket [functions]
   (reset! websocket (js/WebSocket. "ws://localhost:9000/ws"))
