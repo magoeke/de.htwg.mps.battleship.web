@@ -7,15 +7,21 @@ body {
   width: 40vw;
   display: flex;
   flex-wrap: wrap;
-  margin: auto;
   border: 1px solid black;
-  position: relative;
-  top: 50%;
-  transform: translateY(-50%);
 }
 
 .ships {
-  margin:auto;
+  width: 40vw;
+  color: white;
+  font-size: 3vw;
+}
+
+.wrapper {
+    width:40vw;
+    margin: auto;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .setup {
@@ -52,6 +58,7 @@ body {
 }
 
 .right-screen {
+  margin-left: 50vw;
   height: 100vh;
   background-color: #333;
 }

@@ -129,15 +129,17 @@
         [:div {:key (str "screen" (get board 1))
                :style {:height (str (/ 100 rows) "vh")}
                :class (if (= 0 (mod (get board 1) 2)) "left-screen" "right-screen")}
-          [output-board (get board 0) {:on-click cell-click}]])]))
+          [:div {:class "wrapper"}
+            [output-board (get board 0) {:on-click cell-click}]]])]))
 
 (defn output-ships [ships]
   [:div {:class "ships"} (str "Ships: " (clojure.string/join " " (sort ships)))])
 
 (defn setup-screen []
   [:div {:class "setup"}
-    [output-ships @settable-ships]
-    [output-board (nth @game-state 0) {:on-mouse-move cell-mouse-move}]])
+    [:div {:class "wrapper"}
+      [output-ships @settable-ships]
+      [output-board (nth @game-state 0) {:on-mouse-move cell-mouse-move}]]])
 
 (defn render [template handle-general-listener]
     (handle-general-listener)
@@ -173,8 +175,8 @@
 (defn end-dialog [data]
   (println data)
   [:div {:class "modal"
-         :style (if (get data :won) {:background-color "cyan"})}
-    [:div {:class "modal-content"}
+         :style (if (get data :won) {:background-color "#07A0C3"})}
+    [:div {:class "wrapper"}
       (if (get data :won) "You Won!" "Game Over")]])
 
 (defn nothing [] (println ""))
