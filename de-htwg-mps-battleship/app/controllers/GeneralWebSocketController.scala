@@ -43,7 +43,7 @@ class GeneralWebSocketController @Inject() (implicit system: ActorSystem,
       case InitialGame(ships) => gameBroker.actorRef ! JoinGame(playerName, ships); out ! waitForSecondPlayer
       case Game(actorRef) => gameActorRef = actorRef;
       case StartGame => out ! startGame
-      case Winner(player) => out ! winner(player)
+      case Winner(player) => out ! winner(player); println(player)
     }
 
     private def answer(infos: UpdateUI) = {
@@ -72,11 +72,6 @@ class GeneralWebSocketController @Inject() (implicit system: ActorSystem,
         case "fire" => gameActorRef ! CommandProxy(playerName, Fire(calculatePoint((json \ "index").as[String])))
         case _ => ;
       }
-    }
-
-    override def postStop() = {
-      setShip ! PoisonPill
-      gameActorRef ! LeaveGame(playerName)
     }
 
     private def waitForSecondPlayer = Json.stringify(JsObject(Seq("type" -> JsString("waitForSecondPlayer"))))
